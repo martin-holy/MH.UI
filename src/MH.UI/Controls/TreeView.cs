@@ -16,12 +16,14 @@ public class TreeView<T> : ObservableObject, ITreeView where T : class, ITreeIte
   public Selecting<T> SelectedTreeItems { get; } = new();
   public ITreeItem? TopTreeItem { get => _topTreeItem; set { _topTreeItem = value; OnTopTreeItemChanged(); } }
   public bool IsVisible { get => _isVisible; set { _isVisible = value; OnIsVisibleChanged(); } }
+  public ITreeItem[] TopTreeItemPath => _topTreeItem == null ? [] : _topTreeItem.GetThisAndParents().Skip(1).Reverse().Skip(1).ToArray();
   // TODO rename and combine with single and multi select
   public bool ShowTreeItemSelection { get; set; }
   public Action? ScrollToTopAction { get; set; }
   public Action<object[], bool>? ScrollToItemsAction { get; set; }
   public Action<ITreeItem>? ExpandRootWhenReadyAction { get; set; }
 
+  public RelayCommand<ITreeItem> ScrollToItemCommand { get; }
   public RelayCommand ScrollToTopCommand { get; }
   public RelayCommand ScrollSiblingUpCommand { get; }
   public RelayCommand ScrollLevelUpCommand { get; }
@@ -29,6 +31,7 @@ public class TreeView<T> : ObservableObject, ITreeView where T : class, ITreeIte
   public event EventHandler<ObjectEventArgs<T>> TreeItemSelectedEvent = delegate { };
 
   public TreeView() {
+    ScrollToItemCommand = new(x => ScrollTo(x));
     ScrollToTopCommand = new(ScrollToTop);
     ScrollSiblingUpCommand = new(ScrollSiblingUp);
     ScrollLevelUpCommand = new(ScrollLevelUp);
@@ -55,7 +58,9 @@ public class TreeView<T> : ObservableObject, ITreeView where T : class, ITreeIte
     SelectedTreeItems.Select(t.Parent?.Items.Cast<T>().ToList(), t, Keyboard.IsCtrlOn(), Keyboard.IsShiftOn());
   }
 
-  public virtual void OnTopTreeItemChanged() { }
+  public virtual void OnTopTreeItemChanged() {
+    OnPropertyChanged(nameof(TopTreeItemPath));
+  }
 
   public virtual void ScrollTo(ITreeItem? item, bool exactly = true) {
     if (item == null) return;
