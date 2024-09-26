@@ -19,4 +19,5 @@ public interface ITreeView : INotifyPropertyChanged {
   public RelayCommand ScrollSiblingUpCommand { get; }
   public RelayCommand ScrollLevelUpCommand { get; }
   public RelayCommand<object> TreeItemSelectedCommand { get; }
+  public bool IsHitTestItem(ITreeItem item) => true;
 }

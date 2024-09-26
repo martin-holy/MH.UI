@@ -80,6 +80,9 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
   public virtual void OnItemSelected(SelectionEventArgs<T> args) { }
   public virtual string GetItemTemplateName(ViewMode viewMode) => string.Empty;
 
+  public bool IsHitTestItem(ITreeItem item) =>
+    item is CollectionViewRow<T> or CollectionViewGroup<T>;
+
   public void OpenItem(object? item) {
     if (item is not T i) return;
     RaiseItemOpened(i);
