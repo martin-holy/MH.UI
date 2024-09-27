@@ -6,6 +6,7 @@ using MH.Utils.BaseClasses;
 using MH.Utils.EventsArgs;
 using MH.Utils.Interfaces;
 using System;
+using System.Linq;
 
 namespace MH.UI.BaseClasses;
 
@@ -25,6 +26,9 @@ public class TreeCategory : TreeItem, ITreeCategory {
   public static RelayCommand<ITreeItem> ItemDeleteCommand { get; } = new(
     item => GetCategory(item)?.ItemDelete(item!), null, "Delete");
 
+  public static RelayCommand<ITreeItem> ItemMoveToGroupCommand { get; } = new(
+    item => GetCategory(item)?.ItemMoveToGroup(item!), null, "Move to group");
+
   public static RelayCommand<ITreeCategory> GroupCreateCommand { get; } = new(
     item => GetCategory(item)?.GroupCreate(item!), null, "New Group");
 
@@ -43,6 +47,7 @@ public class TreeCategory : TreeItem, ITreeCategory {
   public virtual void ItemCreate(ITreeItem parent) => throw new NotImplementedException();
   public virtual void ItemRename(ITreeItem item) => throw new NotImplementedException();
   public virtual void ItemDelete(ITreeItem item) => throw new NotImplementedException();
+  public virtual void ItemMoveToGroup(ITreeItem item) => throw new NotImplementedException();
   public virtual void GroupCreate(ITreeItem parent) => throw new NotImplementedException();
   public virtual void GroupRename(ITreeGroup group) => throw new NotImplementedException();
   public virtual void GroupDelete(ITreeGroup group) => throw new NotImplementedException();
@@ -141,6 +146,13 @@ public class TreeCategory<TI> : TreeCategory where TI : class, ITreeItem {
     catch (Exception ex) {
       Log.Error(ex);
     }
+  }
+
+  public override void ItemMoveToGroup(ITreeItem item) {
+    var groups = Items.OfType<ITreeGroup>().Except([item.Parent!]).Cast<IListItem>().ToArray();
+    var dlg = new SelectFromListDialog(groups, Res.IconGroup);
+    if (Dialog.Show(dlg) != 1 || dlg.SelectedItem is not ITreeItem group) return;
+    OnDrop(item, group, false, false);
   }
 
   public override void OnDrop(object src, ITreeItem dest, bool aboveDest, bool copy) {

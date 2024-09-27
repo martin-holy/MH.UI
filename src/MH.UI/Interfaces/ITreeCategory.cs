@@ -10,6 +10,7 @@ public interface ITreeCategory : ITreeItem {
   public void ItemCreate(ITreeItem parent);
   public void ItemRename(ITreeItem item);
   public void ItemDelete(ITreeItem item);
+  public void ItemMoveToGroup(ITreeItem item);
 
   public void GroupCreate(ITreeItem parent);
   public void GroupRename(ITreeGroup group);
