@@ -43,7 +43,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
   private readonly GroupByDialog<T> _groupByDialog = new();
   private readonly HashSet<T> _pendingRemove = [];
   private readonly HashSet<T> _pendingUpdate = [];
-  private T[]? _unfilteredSource;
+  private List<T>? _unfilteredSource;
   private ICollectionViewFilter<T>? _filter;
 
   public CollectionViewGroup<T> Root { get; set; }
@@ -103,7 +103,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
 
   public void Reload(List<T> source, GroupMode groupMode, GroupByItem<T>[]? groupByItems, bool expandAll, bool removeEmpty = true) {
     if (_filter != null) {
-      _unfilteredSource = source.ToArray();
+      _unfilteredSource = source.ToList();
       source = source.Where(_filter.Filter).ToList();
     }
 
@@ -179,6 +179,8 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
       items.ForEach(x => _pendingUpdate.Add(x));
       return;
     }
+
+    _updateUnfilteredSource(items, remove);
     
     var toReWrap = new HashSet<CollectionViewGroup<T>>();
 
@@ -193,11 +195,34 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
       foreach (var gbiRoot in _groupByItemsRoots)
         gbiRoot.UpdateGroupByItems(GetGroupByItems(items).ToArray());
 
-      foreach (var item in items)
+      var toInsert = _filter == null
+        ? items
+        : items.Where(_filter.Filter).ToArray();
+
+      foreach (var item in toInsert)
         Root.InsertItem(item, toReWrap);
     }
 
     RemoveEmptyGroups(Root, toReWrap);
+  }
+
+  private void _updateUnfilteredSource(T[] items, bool remove) {
+    if (_unfilteredSource == null) return;
+
+    if (remove) {
+      foreach (var item in items)
+        _unfilteredSource.Remove(item);
+
+      return;
+    }
+
+    var toInsert = items.Except(_unfilteredSource).ToArray();
+    foreach (var item in toInsert) {
+      if (AddInOrder)
+        _unfilteredSource.AddInOrder(item, SortCompare);
+      else
+        _unfilteredSource.Add(item);
+    }
   }
 
   public void RemoveEmptyGroups(CollectionViewGroup<T> group, ISet<CollectionViewGroup<T>>? toReWrap) {
@@ -315,7 +340,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
       return;
     }
 
-    _unfilteredSource = Root.Source.ToArray();
+    _unfilteredSource = Root.Source.ToList();
     _filter.FilterChangedEvent += _onFilterChanged;
   }
 
