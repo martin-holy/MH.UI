@@ -43,6 +43,8 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
   private readonly GroupByDialog<T> _groupByDialog = new();
   private readonly HashSet<T> _pendingRemove = [];
   private readonly HashSet<T> _pendingUpdate = [];
+  private T[]? _unfilteredSource;
+  private ICollectionViewFilter<T>? _filter;
 
   public CollectionViewGroup<T> Root { get; set; }
   public T? TopItem { get; set; }
@@ -100,6 +102,11 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
   }
 
   public void Reload(List<T> source, GroupMode groupMode, GroupByItem<T>[]? groupByItems, bool expandAll, bool removeEmpty = true) {
+    if (_filter != null) {
+      _unfilteredSource = source.ToArray();
+      source = source.Where(_filter.Filter).ToList();
+    }
+
     var root = new CollectionViewGroup<T>(this, source, new(new ListItem(Icon, Name, this), null)) {
       ViewMode = ViewModes[0],
       IsGroupingRoot = true,
@@ -293,5 +300,30 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
   public void SelectNextOrFirstItem(bool inGroup, bool first) {
     var item = SelectNextItem(inGroup, first);
     if (item == null) SelectNextItem(inGroup, true);
+  }
+
+  public void SetFilter(ICollectionViewFilter<T>? filter) {
+    if (_filter != null)
+      _filter.FilterChangedEvent -= _onFilterChanged;
+
+    _filter = filter;
+
+    if (_filter == null) {
+      if (_unfilteredSource == null) return;
+      Insert(_unfilteredSource.Except(Root.Source).ToArray());
+      _unfilteredSource = null;
+      return;
+    }
+
+    _unfilteredSource = Root.Source.ToArray();
+    _filter.FilterChangedEvent += _onFilterChanged;
+  }
+
+  private void _onFilterChanged(object? sender, EventArgs e) {
+    var filtered = _unfilteredSource!.Where(_filter!.Filter).ToArray();
+    var toInsert = filtered.Except(Root.Source).ToArray();
+    var toRemove = Root.Source.Except(filtered).ToArray();
+    Insert(toInsert);
+    Remove(toRemove);
   }
 }
