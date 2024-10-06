@@ -351,4 +351,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
     Insert(toInsert);
     Remove(toRemove);
   }
+
+  public IReadOnlyCollection<T> GetUnfilteredItems() =>
+    _unfilteredSource ?? Root.Source;
 }
