@@ -45,6 +45,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
   private readonly HashSet<T> _pendingUpdate = [];
   private List<T>? _unfilteredSource;
   private ICollectionViewFilter<T>? _filter;
+  private bool _filterIsChanging;
 
   public CollectionViewGroup<T> Root { get; set; }
   public T? TopItem { get; set; }
@@ -180,7 +181,8 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
       return;
     }
 
-    _updateUnfilteredSource(items, remove);
+    if (!_filterIsChanging)
+      _updateUnfilteredSource(items, remove);
     
     var toReWrap = new HashSet<CollectionViewGroup<T>>();
 
@@ -348,8 +350,10 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
     var filtered = _unfilteredSource!.Where(_filter!.Filter).ToArray();
     var toInsert = filtered.Except(Root.Source).ToArray();
     var toRemove = Root.Source.Except(filtered).ToArray();
+    _filterIsChanging = true;
     Insert(toInsert);
     Remove(toRemove);
+    _filterIsChanging = false;
   }
 
   public IReadOnlyCollection<T> GetUnfilteredItems() =>
