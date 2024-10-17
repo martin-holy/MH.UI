@@ -65,6 +65,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
 
   public event EventHandler<ObjectEventArgs<T>> ItemOpenedEvent = delegate { };
   public event EventHandler<SelectionEventArgs<T>> ItemSelectedEvent = delegate { };
+  public event EventHandler FilterAppliedEvent = delegate { };
 
   protected CollectionView(string icon, string name, ViewMode[] viewModes) : base(viewModes) {
     Root = new(this, [], null);
@@ -75,6 +76,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
 
   protected void RaiseItemOpened(T item) => ItemOpenedEvent(this, new(item));
   protected void RaiseItemSelected(SelectionEventArgs<T> args) => ItemSelectedEvent(this, args);
+  protected void RaiseFilterApplied() => FilterAppliedEvent(this, EventArgs.Empty);
 
   public abstract int GetItemSize(ViewMode viewMode, T item, bool getWidth);
   public abstract IEnumerable<GroupByItem<T>> GetGroupByItems(IEnumerable<T> source);
@@ -354,6 +356,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
     Insert(toInsert);
     Remove(toRemove);
     _filterIsChanging = false;
+    RaiseFilterApplied();
   }
 
   public IReadOnlyCollection<T> GetUnfilteredItems() =>
