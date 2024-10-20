@@ -14,6 +14,7 @@ public static class Res {
   public const string IconPlay = "IconPlay";
   public const string IconQuestion = "IconQuestion";
   public const string IconSave = "IconSave";
+  public const string IconSort = "IconSort";
   public const string IconStop = "IconStop";
   public const string IconTimelineShiftBeginning = "IconTimelineShift.Beginning";
   public const string IconTimelineShiftEnd = "IconTimelineShift.End";
