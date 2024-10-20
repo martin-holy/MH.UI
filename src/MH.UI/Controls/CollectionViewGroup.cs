@@ -385,4 +385,16 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
 
   public string GetItemTemplateName() =>
     View.GetItemTemplateName(ViewMode);
+
+  public void Sort() {
+    Source.Sort(View.SortCompare);
+    ReWrap();
+  }
+
+  public void Sort(bool recursive) {
+    if (recursive)
+      DoForAll(this, x => x.Sort());
+    else
+      Sort();
+  }
 }

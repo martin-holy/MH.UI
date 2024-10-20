@@ -62,6 +62,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
   public string Name { get; set; }
 
   public RelayCommand<CollectionViewGroup<T>> OpenGroupByDialogCommand { get; }
+  public RelayCommand<CollectionViewGroup<T>> SortCommand { get; }
 
   public event EventHandler<ObjectEventArgs<T>> ItemOpenedEvent = delegate { };
   public event EventHandler<SelectionEventArgs<T>> ItemSelectedEvent = delegate { };
@@ -72,6 +73,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
     Icon = icon;
     Name = name;
     OpenGroupByDialogCommand = new(_openGroupByDialog, Res.IconGroup, "Group by");
+    SortCommand = new(_sort, Res.IconSort, "Sort");
   }
 
   protected void RaiseItemOpened(T item) => ItemOpenedEvent(this, new(item));
@@ -267,6 +269,9 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
     if (group != null && _groupByDialog.Open(group, GetGroupByItems(group.Source)))
       _groupByItemsRoots.Add(group);
   }
+
+  private static void _sort(CollectionViewGroup<T>? group) =>
+    group?.Sort(Keyboard.IsShiftOn());
 
   public override void OnTopTreeItemChanged() {
     base.OnTopTreeItemChanged();
