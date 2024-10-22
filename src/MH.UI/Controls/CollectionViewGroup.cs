@@ -386,6 +386,18 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
   public string GetItemTemplateName() =>
     View.GetItemTemplateName(ViewMode);
 
+  public void Shuffle() {
+    Source.Shuffle();
+    ReWrap();
+  }
+
+  public void Shuffle(bool recursive) {
+    if (recursive)
+      DoForAll(this, x => x.Shuffle());
+    else
+      Shuffle();
+  }
+
   public void Sort() {
     Source.Sort(View.SortCompare);
     ReWrap();

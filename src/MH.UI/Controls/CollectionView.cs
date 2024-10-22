@@ -62,6 +62,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
   public string Name { get; set; }
 
   public RelayCommand<CollectionViewGroup<T>> OpenGroupByDialogCommand { get; }
+  public RelayCommand<CollectionViewGroup<T>> ShuffleCommand { get; }
   public RelayCommand<CollectionViewGroup<T>> SortCommand { get; }
 
   public event EventHandler<ObjectEventArgs<T>> ItemOpenedEvent = delegate { };
@@ -73,6 +74,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
     Icon = icon;
     Name = name;
     OpenGroupByDialogCommand = new(_openGroupByDialog, Res.IconGroup, "Group by");
+    ShuffleCommand = new(_shuffle, Res.IconRandom, "Shuffle");
     SortCommand = new(_sort, Res.IconSort, "Sort");
   }
 
@@ -269,6 +271,9 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
     if (group != null && _groupByDialog.Open(group, GetGroupByItems(group.Source)))
       _groupByItemsRoots.Add(group);
   }
+
+  private static void _shuffle(CollectionViewGroup<T>? group) =>
+    group?.Shuffle(Keyboard.IsShiftOn());
 
   private static void _sort(CollectionViewGroup<T>? group) =>
     group?.Sort(Keyboard.IsShiftOn());
