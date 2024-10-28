@@ -49,9 +49,9 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
 
   public CollectionViewGroup<T> Root { get; set; }
   public T? TopItem { get; set; }
-  public T? LastSelectedItem { get; set; }
+  public T? LastSelectedItem { get; protected set; }
   public CollectionViewGroup<T>? TopGroup { get; set; }
-  public CollectionViewRow<T>? LastSelectedRow { get; set; }
+  public CollectionViewRow<T>? LastSelectedRow { get; protected set; }
   public object? UIView { get; set; }
   public bool AddInOrder { get; set; } = true;
   public bool CanOpen { get; set; } = true;
@@ -60,6 +60,20 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
   public int GroupContentOffset { get; set; } = 0;
   public string Icon { get; set; }
   public string Name { get; set; }
+
+  public string PositionSlashCount {
+    get {
+      var group = LastSelectedRow?.Parent as CollectionViewGroup<T>;
+      var totalCount = Root.Source.Count;
+      var groupCount = group?.Source.Count ?? 0;
+      var position = LastSelectedItem == null ? 0 : group?.Source.IndexOf(LastSelectedItem) + 1 ?? 0;
+
+      if (position == 0) return totalCount.ToString();
+      return totalCount == groupCount
+        ? $"{position}/{groupCount}"
+        : $"{position}/{groupCount}/{totalCount}";
+    }
+  }
 
   public RelayCommand<CollectionViewGroup<T>> OpenGroupByDialogCommand { get; }
   public RelayCommand<CollectionViewGroup<T>> ShuffleCommand { get; }
@@ -106,6 +120,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
     var args = new SelectionEventArgs<T>(((CollectionViewGroup<T>)r.Parent!).Source, i, isCtrlOn, isShiftOn);
     RaiseItemSelected(args);
     OnItemSelected(args);
+    OnPropertyChanged(nameof(PositionSlashCount));
   }
 
   public void Reload(List<T> source, GroupMode groupMode, GroupByItem<T>[]? groupByItems, bool expandAll, bool removeEmpty = true) {
@@ -135,6 +150,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
 
     _groupByItemsRoots.Clear();
     _groupByItemsRoots.Add(Root);
+    _clearLastSelected();
   }
 
   public void ReWrapAll() {
@@ -211,6 +227,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
         Root.InsertItem(item, toReWrap);
     }
 
+    _clearLastSelected();
     RemoveEmptyGroups(Root, toReWrap);
   }
 
@@ -272,11 +289,21 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
       _groupByItemsRoots.Add(group);
   }
 
-  private static void _shuffle(CollectionViewGroup<T>? group) =>
-    group?.Shuffle(Keyboard.IsShiftOn());
+  private void _clearLastSelected() {
+    LastSelectedRow = null;
+    LastSelectedItem = null;
+    OnPropertyChanged(nameof(PositionSlashCount));
+  }
 
-  private static void _sort(CollectionViewGroup<T>? group) =>
+  private void _shuffle(CollectionViewGroup<T>? group) {
+    group?.Shuffle(Keyboard.IsShiftOn());
+    _clearLastSelected();
+  }
+
+  private void _sort(CollectionViewGroup<T>? group) {
     group?.Sort(Keyboard.IsShiftOn());
+    _clearLastSelected();
+  }
 
   public override void OnTopTreeItemChanged() {
     base.OnTopTreeItemChanged();
