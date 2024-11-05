@@ -15,7 +15,7 @@ public class TreeCategory : TreeItem, ITreeCategory {
   public bool CanCopyItem { get; set; }
   public bool CanMoveItem { get; set; }
   public bool UseTreeDelete { get; set; }
-  public TreeView<ITreeItem> TreeView { get; } = new();
+  public TreeView<ITreeItem> TreeView { get; }
 
   public static RelayCommand<ITreeItem> ItemCreateCommand { get; } = new(
     item => GetCategory(item)?.ItemCreate(item!), null, "New");
@@ -38,8 +38,9 @@ public class TreeCategory : TreeItem, ITreeCategory {
   public static RelayCommand<ITreeGroup> GroupDeleteCommand { get; } = new(
     item => GetCategory(item)?.GroupDelete(item!), null, "Delete Group");
 
-  public TreeCategory(string icon, string name, int id) : base(icon, name) {
+  public TreeCategory(TreeView<ITreeItem> treeView, string icon, string name, int id) : base(icon, name) {
     Id = id;
+    TreeView = treeView;
     TreeView.RootHolder.Add(this);
     TreeView.TreeItemSelectedEvent += (_, e) => OnItemSelected(e.Data);
   }
@@ -102,7 +103,8 @@ public class TreeCategory<TI> : TreeCategory where TI : class, ITreeItem {
 
   public event EventHandler<TreeItemDroppedEventArgs> AfterDropEvent = delegate { };
 
-  public TreeCategory(string icon, string name, int id, ITreeDataAdapter<TI> dataAdapter) : base(icon, name, id) {
+  public TreeCategory(TreeView<ITreeItem> treeView, string icon, string name, int id, ITreeDataAdapter<TI> dataAdapter)
+    : base(treeView, icon, name, id) {
     DataAdapter = dataAdapter;
   }
 
@@ -184,7 +186,8 @@ public class TreeCategory<TI> : TreeCategory where TI : class, ITreeItem {
 public class TreeCategory<TI, TG> : TreeCategory<TI> where TI : class, ITreeItem where TG : class, ITreeItem  {
   protected ITreeDataAdapter<TG> GroupDataAdapter { get; set; }
 
-  public TreeCategory(string icon, string name, int id, ITreeDataAdapter<TI> da, ITreeDataAdapter<TG> gda) : base(icon, name, id, da) {
+  public TreeCategory(TreeView<ITreeItem> treeView, string icon, string name, int id, ITreeDataAdapter<TI> da,
+    ITreeDataAdapter<TG> gda) : base(treeView, icon, name, id, da) {
     GroupDataAdapter = gda;
   }
 
