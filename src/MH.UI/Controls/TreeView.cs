@@ -5,6 +5,8 @@ using MH.Utils.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MH.UI.Controls;
 
@@ -27,7 +29,7 @@ public class TreeView<T> : ObservableObject, ITreeView where T : class, ITreeIte
   public RelayCommand ScrollToTopCommand { get; }
   public RelayCommand ScrollSiblingUpCommand { get; }
   public RelayCommand ScrollLevelUpCommand { get; }
-  public RelayCommand<object> TreeItemSelectedCommand { get; }
+  public AsyncRelayCommand<ITreeItem> SelectItemCommand { get; }
   public event EventHandler<ObjectEventArgs<T>> TreeItemSelectedEvent = delegate { };
 
   public TreeView() {
@@ -35,8 +37,12 @@ public class TreeView<T> : ObservableObject, ITreeView where T : class, ITreeIte
     ScrollToTopCommand = new(ScrollToTop);
     ScrollSiblingUpCommand = new(ScrollSiblingUp);
     ScrollLevelUpCommand = new(ScrollLevelUp);
-    TreeItemSelectedCommand = new(OnTreeItemSelected);
+    SelectItemCommand = new((item, token) => SelectItem((T)item!, token), item => item is T);
   }
+
+  protected void RaiseTreeItemSelected(T item) => TreeItemSelectedEvent(this, new(item));
+
+  protected virtual Task OnItemSelected(T item, CancellationToken token) => Task.CompletedTask;
 
   private void ScrollToTop() =>
     ScrollToTopAction?.Invoke();
@@ -51,11 +57,12 @@ public class TreeView<T> : ObservableObject, ITreeView where T : class, ITreeIte
     if (IsVisible) ScrollTo(TopTreeItem);
   }
 
-  public virtual void OnTreeItemSelected(object? o) {
-    if (o is not T t) return;
-    TreeItemSelectedEvent(this, new(t));
-    if (!ShowTreeItemSelection) return;
-    SelectedTreeItems.Select(t.Parent?.Items.Cast<T>().ToList(), t, Keyboard.IsCtrlOn(), Keyboard.IsShiftOn());
+  public virtual async Task SelectItem(T item, CancellationToken token) {
+    RaiseTreeItemSelected(item);
+    await OnItemSelected(item, token);
+
+    if (ShowTreeItemSelection)
+      SelectedTreeItems.Select(item.Parent?.Items.Cast<T>().ToList(), item, Keyboard.IsCtrlOn(), Keyboard.IsShiftOn());
   }
 
   public virtual void OnTopTreeItemChanged() {
