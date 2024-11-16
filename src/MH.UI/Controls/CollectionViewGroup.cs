@@ -28,7 +28,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
   public IEnumerable<CollectionViewGroup<T>> Groups => Items.OfType<CollectionViewGroup<T>>();
   public GroupByItem<T>[]? GroupByItems { get; set; }
   public GroupByItem<T>? GroupedBy { get; }
-  public double Width { get => _width; set => SetWidth(value); }
+  public double Width { get => _width; set => _setWidth(value); }
   public bool IsGroupingRoot { get; set; }
   public bool IsRecursive { get; set; }
   public bool IsGroupBy { get; set; }
@@ -52,10 +52,10 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
     IsGroupBy = parent.IsGroupBy;
     IsThenBy = parent.IsThenBy;
     Width = parent.Width - View.GroupContentOffset;
-    GroupByItems = parent.GetGroupByItemsForSubGroup();
+    GroupByItems = parent._getGroupByItemsForSubGroup();
   }
 
-  private GroupByItem<T>[]? GetGroupByItemsForSubGroup() {
+  private GroupByItem<T>[]? _getGroupByItemsForSubGroup() {
     if (GroupByItems == null || !IsThenBy)
       return null;
     if (IsRecursive && !IsGroupingRoot && GroupedBy?.Items.Count > 0)
@@ -66,7 +66,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
     return null;
   }
 
-  private GroupByItem<T>[]? GetGroupByItemsForGrouping() {
+  private GroupByItem<T>[]? _getGroupByItemsForGrouping() {
     GroupByItem<T>[]? groupByItems = null;
 
     if (GroupByItems != null && (IsGroupingRoot || GroupedBy is null or { Items.Count: 0 })) {
@@ -83,7 +83,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
 
   public void GroupIt() {
     Items.Clear();
-    var groupByItems = GetGroupByItemsForGrouping();
+    var groupByItems = _getGroupByItemsForGrouping();
     if (groupByItems == null) return;
 
     // first item reserved for empty group
@@ -128,7 +128,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
     while (true) {
       if (g == null) break;
 
-      if (g.IsEmpty()) {
+      if (g._isEmpty()) {
         g.Parent?.Items.Remove(g);
         removedGroups?.Add(g);
         removed = true;
@@ -140,7 +140,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
     }
   }
 
-  private bool IsEmpty() =>
+  private bool _isEmpty() =>
     Source.Count == 0 // empty source
     || (!Groups.Any() // no sub groups
         && (GroupedBy is { IsGroup: true } // type group
@@ -154,7 +154,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
   }
 
   public void InsertItem(T item, ISet<CollectionViewGroup<T>> toReWrap) {
-    var groupByItems = GetGroupByItemsForGrouping();
+    var groupByItems = _getGroupByItemsForGrouping();
 
     // add the item to the source if is not present
     if (!Source.Contains(item)) {
@@ -244,7 +244,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
         group.RemoveItem(item, toReWrap);
   }
 
-  private void SetWidth(double width) {
+  private void _setWidth(double width) {
     if (Math.Abs(Width - width) < 1) return;
     _width = width;
     OnPropertyChanged(nameof(Width));
@@ -279,7 +279,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
       return;
     }
 
-    var newRows = WrapSource().ToArray();
+    var newRows = _wrapSource().ToArray();
 
     // add or remove rows to match the source
     if (Items.Count > newRows.Length) {
@@ -316,7 +316,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
   public int GetItemSize(object item, bool getWidth) =>
     View.GetItemSize(ViewMode, (T)item, getWidth);
 
-  private IEnumerable<IList<T>> WrapSource() {
+  private IEnumerable<IList<T>> _wrapSource() {
     var index = 0;
     var usedSpace = 0;
 
