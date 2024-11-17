@@ -42,8 +42,10 @@ public class ZoomAndPan : ObservableObject {
   public double ActualZoom => _scaleX * 100;
 
   public event EventHandler AnimationEndedEvent = delegate { };
+  public event EventHandler ContentMouseDownEvent = delegate { };
 
   private void _raiseAnimationEnded() => AnimationEndedEvent(this, EventArgs.Empty);
+  private void _raiseContentMouseDown() => ContentMouseDownEvent(this, EventArgs.Empty);
 
   private void _setScale(double scale, double relativeX, double relativeY) {
     var absoluteX = (relativeX * _scaleX) + _transformX;
@@ -137,6 +139,8 @@ public class ZoomAndPan : ObservableObject {
   }
 
   public void OnContentMouseDown(double hostPosX, double hostPosY, double contentPosX, double contentPosY) {
+    _raiseContentMouseDown();
+
     if (!_isZoomed)
       _setScale(1, contentPosX, contentPosY);
 
