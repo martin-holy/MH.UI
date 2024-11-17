@@ -100,7 +100,7 @@ public class ZoomAndPan : ObservableObject {
   }
 
   public void StartAnimation(int minDuration) {
-    if (Host == null) return;
+    if (Host == null) { _raiseAnimationEnded(); return; }
     var horizontal = Host.Height / _contentHeight * _contentWidth > Host.Width;
     var scale = horizontal
       ? Host.Height / _contentHeight
