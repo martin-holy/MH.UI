@@ -42,7 +42,7 @@ public class TreeCategory : TreeItem, ITreeCategory {
     Id = id;
     TreeView = treeView;
     TreeView.RootHolder.Add(this);
-    TreeView.TreeItemSelectedEvent += (_, e) => OnItemSelected(e.Data);
+    TreeView.ItemSelectedEvent += (_, e) => OnItemSelected(e.Data);
   }
 
   public virtual void ItemCreate(ITreeItem parent) => throw new NotImplementedException();

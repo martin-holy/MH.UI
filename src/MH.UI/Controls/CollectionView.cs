@@ -80,7 +80,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
   public RelayCommand<CollectionViewGroup<T>> SortCommand { get; }
 
   public event EventHandler<ObjectEventArgs<T>> ItemOpenedEvent = delegate { };
-  public event EventHandler<SelectionEventArgs<T>> ItemSelectedEvent = delegate { };
+  public new event EventHandler<SelectionEventArgs<T>> ItemSelectedEvent = delegate { };
   public event EventHandler FilterAppliedEvent = delegate { };
 
   protected CollectionView(string icon, string name, ViewMode[] viewModes) : base(viewModes) {
@@ -141,7 +141,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
     TopGroup = null;
     TopItem = default;
     ScrollToTopAction?.Invoke();
-    UpdateRoot(root, _ => {
+    _updateRoot(root, _ => {
       Root = root;
       Root.GroupIt();
       if (removeEmpty) CollectionViewGroup<T>.RemoveEmptyGroups(Root, null, null);
@@ -154,7 +154,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
   }
 
   public void ReWrapAll() {
-    UpdateRoot(Root, _ => CollectionViewGroup<T>.ReWrapAll(Root));
+    _updateRoot(Root, _ => CollectionViewGroup<T>.ReWrapAll(Root));
     ScrollTo(TopGroup, TopItem);
   }
 
@@ -269,7 +269,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
     return group;
   }
 
-  public override void OnIsVisibleChanged() {
+  protected override void _onIsVisibleChanged() {
     if (!IsVisible) return;
     ReGroupPendingItems();
     ScrollTo(TopGroup, TopItem);
@@ -278,7 +278,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
   public void SetExpanded(object group) {
     if (group is not CollectionViewGroup<T> g) return;
       
-    UpdateRoot(Root, _ => g.SetExpanded<CollectionViewGroup<T>>(g.IsExpanded));
+    _updateRoot(Root, _ => g.SetExpanded<CollectionViewGroup<T>>(g.IsExpanded));
     TopItem = default;
     TopGroup = g;
     ScrollTo(TopGroup, TopItem);
@@ -305,8 +305,8 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
     _clearLastSelected();
   }
 
-  public override void OnTopTreeItemChanged() {
-    base.OnTopTreeItemChanged();
+  protected override void _onTopTreeItemChanged() {
+    base._onTopTreeItemChanged();
     var row = TopTreeItem as CollectionViewRow<T>;
     var group = TopTreeItem as CollectionViewGroup<T>;
 
