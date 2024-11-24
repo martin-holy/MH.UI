@@ -79,9 +79,9 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
   public RelayCommand<CollectionViewGroup<T>> ShuffleCommand { get; }
   public RelayCommand<CollectionViewGroup<T>> SortCommand { get; }
 
-  public event EventHandler<ObjectEventArgs<T>> ItemOpenedEvent = delegate { };
-  public new event EventHandler<SelectionEventArgs<T>> ItemSelectedEvent = delegate { };
-  public event EventHandler FilterAppliedEvent = delegate { };
+  public event EventHandler<ObjectEventArgs<T>>? ItemOpenedEvent;
+  public new event EventHandler<SelectionEventArgs<T>>? ItemSelectedEvent;
+  public event EventHandler? FilterAppliedEvent;
 
   protected CollectionView(string icon, string name, ViewMode[] viewModes) : base(viewModes) {
     Root = new(this, [], null);
@@ -92,15 +92,15 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
     SortCommand = new(_sort, Res.IconSort, "Sort");
   }
 
-  protected void RaiseItemOpened(T item) => ItemOpenedEvent(this, new(item));
-  protected void RaiseItemSelected(SelectionEventArgs<T> args) => ItemSelectedEvent(this, args);
-  protected void RaiseFilterApplied() => FilterAppliedEvent(this, EventArgs.Empty);
+  protected void _raiseItemOpened(T item) => ItemOpenedEvent?.Invoke(this, new(item));
+  protected void _raiseItemSelected(SelectionEventArgs<T> args) => ItemSelectedEvent?.Invoke(this, args);
+  protected void _raiseFilterApplied() => FilterAppliedEvent?.Invoke(this, EventArgs.Empty);
 
   public abstract int GetItemSize(ViewMode viewMode, T item, bool getWidth);
   public abstract IEnumerable<GroupByItem<T>> GetGroupByItems(IEnumerable<T> source);
   public abstract int SortCompare(T itemA, T itemB);
-  public virtual void OnItemOpened(T item) { }
-  public virtual void OnItemSelected(SelectionEventArgs<T> args) { }
+  protected virtual void _onItemOpened(T item) { }
+  protected virtual void _onItemSelected(SelectionEventArgs<T> args) { }
   public virtual string GetItemTemplateName(ViewMode viewMode) => string.Empty;
 
   public bool IsHitTestItem(ITreeItem item) =>
@@ -108,8 +108,8 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
 
   public void OpenItem(object? item) {
     if (item is not T i) return;
-    RaiseItemOpened(i);
-    OnItemOpened(i);
+    _raiseItemOpened(i);
+    _onItemOpened(i);
   }
 
   public void SelectItem(object row, object item, bool isCtrlOn, bool isShiftOn) {
@@ -118,8 +118,8 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
     LastSelectedItem = i;
     LastSelectedRow = r;
     var args = new SelectionEventArgs<T>(((CollectionViewGroup<T>)r.Parent!).Source, i, isCtrlOn, isShiftOn);
-    RaiseItemSelected(args);
-    OnItemSelected(args);
+    _raiseItemSelected(args);
+    _onItemSelected(args);
     OnPropertyChanged(nameof(PositionSlashCount));
   }
 
@@ -348,7 +348,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
     if (LastSelectedRow.Parent is not CollectionViewGroup<T> group) return default;
     var index = group.Source.IndexOf(LastSelectedItem);
     var item = group.GetItemByIndex(index + 1);
-    CollectionViewGroup<T>? itemGroup = group;
+    var itemGroup = group;
 
     if (item == null)
       if (inGroup) item = group.Source[0];
@@ -393,7 +393,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
     Insert(toInsert);
     Remove(toRemove);
     _filterIsChanging = false;
-    RaiseFilterApplied();
+    _raiseFilterApplied();
   }
 
   public IReadOnlyCollection<T> GetUnfilteredItems() =>
