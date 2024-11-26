@@ -352,7 +352,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
     return true;
   }
 
-  protected override void OnIsExpandedChanged(bool value) {
+  protected override void _onIsExpandedChanged(bool value) {
     if (!value || !IsReWrapPending) return;
     ReWrap();
     IsReWrapPending = false;
