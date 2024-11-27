@@ -44,14 +44,14 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
     OnPropertyChanged(nameof(SourceCount));
   }
 
-  public CollectionViewGroup(CollectionViewGroup<T> parent, GroupByItem<T>? groupedBy, List<T> source)
+  private CollectionViewGroup(CollectionViewGroup<T> parent, List<T> source, GroupByItem<T>? groupedBy)
     : this(parent.View, source, groupedBy) {
     ViewMode = parent.ViewMode;
     Parent = parent;
     IsRecursive = parent.IsRecursive;
     IsGroupBy = parent.IsGroupBy;
     IsThenBy = parent.IsThenBy;
-    Width = parent.Width - View.GroupContentOffset;
+    _width = parent.Width - View.GroupContentOffset;
     GroupByItems = parent._getGroupByItemsForSubGroup();
   }
 
@@ -92,15 +92,15 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
     foreach (var item in Source) {
       var fit = false;
 
-      for (int i = 0; i < groupByItems.Length; i++) {
+      for (var i = 0; i < groupByItems.Length; i++) {
         if (!groupByItems[i].Fit(item)) continue;
-        newGroups[i + 1] ??= new(this, groupByItems[i], []);
+        newGroups[i + 1] ??= new(this, [], groupByItems[i]);
         newGroups[i + 1]!.Source.Add(item);
         fit = true;
       }
 
       if (fit) continue;
-      newGroups[0] ??= new(this, null, []);
+      newGroups[0] ??= new(this, [], null);
       newGroups[0]!.Source.Add(item);
     }
 
@@ -124,7 +124,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
 
     // and then up the tree and check if is group empty
     var removed = false;
-    CollectionViewGroup<T>? g = group;
+    var g = group;
     while (true) {
       if (g == null) break;
 
@@ -196,7 +196,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
       if (group != null)
         group.InsertItem(item, toReWrap);
       else {
-        group = new(this, gbi, new() { item });
+        group = new(this, [item], gbi);
         group.GroupIt();
         group.SetExpanded<CollectionViewGroup<T>>(true);
         Items.SetInOrder(group,
@@ -213,7 +213,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
       var emptyGroup = groups.SingleOrDefault(x => x.GroupedBy == null);
 
       if (emptyGroup == null) {
-        emptyGroup = new(this, null, new()) { IsExpanded = true };
+        emptyGroup = new(this, [], null) { IsExpanded = true };
         Items.Insert(0, emptyGroup);
       }
 
@@ -245,7 +245,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
   }
 
   private void _setWidth(double width) {
-    if (Math.Abs(Width - width) < 1) return;
+    if (Math.Abs(_width - width) < 1) return;
     _width = width;
     OnPropertyChanged(nameof(Width));
     ReWrap();
@@ -268,7 +268,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
     DoForAll(group, g => g.ReWrap());
 
   public void ReWrap() {
-    if (Items.FirstOrDefault() is CollectionViewGroup<T> || !(Width > 0)) return;
+    if (Items.FirstOrDefault() is CollectionViewGroup<T> || !(_width > 0)) return;
 
     if (!IsExpanded) {
       IsReWrapPending = true;
@@ -296,7 +296,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
     }
 
     // update items in rows if necessary
-    for (int i = 0; i < newRows.Length; i++) {
+    for (var i = 0; i < newRows.Length; i++) {
       var oldRow = (CollectionViewRow<T>)Items[i];
       var newRow = newRows[i];
 
@@ -320,11 +320,11 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
     var index = 0;
     var usedSpace = 0;
 
-    for (int i = 0; i < Source.Count; i++) {
+    for (var i = 0; i < Source.Count; i++) {
       var item = Source[i];
       var itemWidth = GetItemSize(item, true);
 
-      if (Width - usedSpace < itemWidth) {
+      if (_width - usedSpace < itemWidth) {
         yield return Source.GetRange(index, i - index);
         index = i;
         usedSpace = 0;
