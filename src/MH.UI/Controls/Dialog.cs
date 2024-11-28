@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 
 namespace MH.UI.Controls;
 
-public class Dialog : ObservableObject {
-  private string _title;
-  private string _icon;
+public class Dialog(string title, string icon) : ObservableObject {
+  private string _title = title;
+  private string _icon = icon;
   private int _result = -1;
   private DialogButton[] _buttons = [];
 
@@ -20,7 +20,7 @@ public class Dialog : ObservableObject {
     get => _result;
     set {
       _result = value;
-      OnResultChanged(value).ContinueWith(_ => Tasks.RunOnUiThread(() => OnPropertyChanged()));
+      _onResultChanged(value).ContinueWith(_ => Tasks.RunOnUiThread(() => OnPropertyChanged()));
     }
   }
 
@@ -30,11 +30,6 @@ public class Dialog : ObservableObject {
   public static RelayCommand<Dialog> OkCommand { get; } = new(x => SetResult(x, 1), null, "Ok");
   public static RelayCommand<Dialog> YesCommand { get; } = new(x => SetResult(x, 1), null, "Yes");
 
-  public Dialog(string title, string icon) {
-    _title = title;
-    _icon = icon;
-  }
-
   public static void SetResult(Dialog? dialog, int result) {
     if (dialog != null) dialog.Result = result;
   }
@@ -42,5 +37,5 @@ public class Dialog : ObservableObject {
   public RelayCommand SetResult(int result, string? icon, string? text) =>
     new(() => Result = result, icon, text);
 
-  protected virtual Task OnResultChanged(int result) => Task.CompletedTask;
+  protected virtual Task _onResultChanged(int result) => Task.CompletedTask;
 }

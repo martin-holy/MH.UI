@@ -51,7 +51,7 @@ public class ProgressDialog<T> : Dialog {
 
   protected virtual void CustomProgress(object? args) { }
 
-  protected override Task OnResultChanged(int result) {
+  protected override Task _onResultChanged(int result) {
     if (result == 0) ActionCommand.CancelCommand.Execute(null);
     return Task.CompletedTask;
   }
