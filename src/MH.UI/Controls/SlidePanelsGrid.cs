@@ -10,7 +10,7 @@ public class SlidePanelsGrid : ObservableObject {
   private double _panelRightGridWidth;
   private double _panelBottomGridHeight;
 
-  public int ActiveLayout { get => _activeLayout; set => OnActivateLayoutChanged(value); }
+  public int ActiveLayout { get => _activeLayout; set => _onActivateLayoutChanged(value); }
   public bool[][] PinLayouts { get; }
   public SlidePanel? PanelLeft { get; }
   public SlidePanel? PanelTop { get; }
@@ -48,13 +48,13 @@ public class SlidePanelsGrid : ObservableObject {
     PanelLeftGridWidth = PanelLeft?.Size ?? 0;
     PanelRightGridWidth = PanelRight?.Size ?? 0;
     ActiveLayout = 0;
-    InitPanel(PanelLeft);
-    InitPanel(PanelTop);
-    InitPanel(PanelRight);
-    InitPanel(PanelBottom);
+    _initPanel(PanelLeft);
+    _initPanel(PanelTop);
+    _initPanel(PanelRight);
+    _initPanel(PanelBottom);
   }
 
-  private void InitPanel(SlidePanel? panel) {
+  private void _initPanel(SlidePanel? panel) {
     if (panel == null) return;
     panel.PropertyChanged += (_, e) => {
       if (!e.Is(nameof(panel.IsPinned))) return;
@@ -63,7 +63,7 @@ public class SlidePanelsGrid : ObservableObject {
     };
   }
 
-  private void OnActivateLayoutChanged(int value) {
+  private void _onActivateLayoutChanged(int value) {
     _activeLayout = value;
     OnPropertyChanged(nameof(ActiveLayout));
     var activeLayout = PinLayouts[value];
