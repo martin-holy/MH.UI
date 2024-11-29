@@ -1,5 +1,6 @@
 ﻿using MH.Utils.BaseClasses;
 using MH.Utils.Interfaces;
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 
@@ -16,8 +17,8 @@ public class TabControl : ObservableObject {
 
   public RelayCommand<IListItem> CloseTabCommand { get; }
 
-  public event DataEventHandler<IListItem> TabActivatedEvent = delegate { };
-  public event DataEventHandler<IListItem> TabClosedEvent = delegate { };
+  public event EventHandler<IListItem>? TabActivatedEvent;
+  public event EventHandler<IListItem>? TabClosedEvent;
 
   public TabControl(TabStrip tabStrip) {
     TabStrip = tabStrip;
@@ -26,6 +27,9 @@ public class TabControl : ObservableObject {
     Tabs.CollectionChanged += (_, _) => TabStrip.UpdateMaxTabSize(Tabs.Count);
   }
 
+  protected void _raiseTabActivated(IListItem tab) => TabActivatedEvent?.Invoke(this, tab);
+  protected void _raiseTabClosed(IListItem tab) => TabClosedEvent?.Invoke(this, tab);
+
   public void Activate(string icon, string name, object data) {
     var tab = Tabs.SingleOrDefault(x => ReferenceEquals(data, x.Data));
     if (tab != null)
@@ -33,7 +37,7 @@ public class TabControl : ObservableObject {
     else
       Add(icon, name, data);
 
-    TabActivatedEvent(Selected!);
+    _raiseTabActivated(Selected!);
   }
 
   public void Add(string icon, string name, object data) =>
@@ -61,7 +65,7 @@ public class TabControl : ObservableObject {
     if (ReferenceEquals(Selected, tab))
       Selected = Tabs.FirstOrDefault();
 
-    TabClosedEvent(tab);
+    _raiseTabClosed(tab);
   }
 
   public IListItem? GetTabByData(object data) =>
