@@ -2,10 +2,10 @@
 
 namespace MH.UI.Controls;
 
-public sealed class TabStrip : ObservableObject {
-  private Dock _placement;
-  private Dock _slotPlacement;
-  private object _slot;
+public sealed class TabStrip(Dock placement, Dock slotPlacement, object slot) : ObservableObject {
+  private Dock _placement = placement;
+  private Dock _slotPlacement = slotPlacement;
+  private object _slot = slot;
   private int _rotationAngle;
   private bool _justifyTabSize;
   private double _maxTabWidth;
@@ -21,43 +21,37 @@ public sealed class TabStrip : ObservableObject {
   public double MaxTabHeight { get => _maxTabHeight; set { _maxTabHeight = value; OnPropertyChanged(); } }
   public double Size { get => _size; set { _size = value; OnPropertyChanged(); } }
 
-  public TabStrip(Dock placement, Dock slotPlacement, object slot) {
-    _placement = placement;
-    _slotPlacement = slotPlacement;
-    _slot = slot;
-  }
-
   public void UpdateMaxTabSize(int tabsCount) {
-    if (tabsCount == 0 || !JustifyTabSize) {
-      ResetMaxTabSize();
+    if (tabsCount == 0 || !_justifyTabSize) {
+      _resetMaxTabSize();
       return;
     }
 
-    if (Placement is Dock.Top or Dock.Bottom) {
-      if (RotationAngle == 0)
-        ResetMaxTabSize((int)(Size / tabsCount));
+    if (_placement is Dock.Top or Dock.Bottom) {
+      if (_rotationAngle == 0)
+        _resetMaxTabSize((int)(_size / tabsCount));
       else
-        ResetMaxTabSize();
+        _resetMaxTabSize();
     }
     else {
-      if (RotationAngle == 0)
-        ResetMaxTabSize();
+      if (_rotationAngle == 0)
+        _resetMaxTabSize();
       else
-        ResetMaxTabSize(int.MaxValue, (int)(Size / tabsCount));
+        _resetMaxTabSize(int.MaxValue, (int)(_size / tabsCount));
     }
   }
 
   public void UpdateMaxTabSize(double? width, double? height, int tabsCount) {
-    if (!JustifyTabSize || width is not { } w || height is not { } h) {
-      ResetMaxTabSize();
+    if (!_justifyTabSize || width is not { } w || height is not { } h) {
+      _resetMaxTabSize();
       return;
     }
 
-    Size = Placement is Dock.Top or Dock.Bottom ? w : h;
+    Size = _placement is Dock.Top or Dock.Bottom ? w : h;
     UpdateMaxTabSize(tabsCount);
   }
 
-  private void ResetMaxTabSize(int w = int.MaxValue, int h = int.MaxValue) {
+  private void _resetMaxTabSize(int w = int.MaxValue, int h = int.MaxValue) {
     MaxTabWidth = w;
     MaxTabHeight = h;
   }
