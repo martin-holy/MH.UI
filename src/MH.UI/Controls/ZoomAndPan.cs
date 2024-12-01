@@ -1,5 +1,6 @@
 ﻿using MH.Utils;
 using MH.Utils.BaseClasses;
+using MH.Utils.Types;
 using System;
 
 namespace MH.UI.Controls;
@@ -7,6 +8,12 @@ namespace MH.UI.Controls;
 public interface IZoomAndPanHost {
   public double Width { get; }
   public double Height { get; }
+
+  public event EventHandler? HostSizeChangedEvent;
+  public event EventHandler<PointD>? HostMouseMoveEvent;
+  public event EventHandler<(PointD, PointD)>? HostMouseDownEvent;
+  public event EventHandler? HostMouseUpEvent;
+  public event EventHandler<(int, PointD)>? HostMouseWheelEvent;
 
   public void StartAnimation(double toValue, double duration, bool horizontal, Action onCompleted);
   public void StopAnimation();
@@ -28,8 +35,9 @@ public class ZoomAndPan : ObservableObject {
   private bool _isAnimationOn;
   private bool _expandToFill;
   private bool _shrinkToFill = true;
+  private IZoomAndPanHost? _host;
 
-  public IZoomAndPanHost? Host { get; set; }
+  public IZoomAndPanHost? Host { get => _host; set => _setHost(value); }
   public double ScaleX { get => _scaleX; set { _scaleX = value; OnPropertyChanged(); } }
   public double ScaleY { get => _scaleY; set { _scaleY = value; OnPropertyChanged(); } }
   public double TransformX { get => _transformX; set { _transformX = value; OnPropertyChanged(); } }
@@ -41,11 +49,32 @@ public class ZoomAndPan : ObservableObject {
   public bool ShrinkToFill { get => _shrinkToFill; set { _shrinkToFill = value; OnPropertyChanged(); } }
   public double ActualZoom => _scaleX * 100;
 
-  public event EventHandler AnimationEndedEvent = delegate { };
-  public event EventHandler ContentMouseDownEvent = delegate { };
+  public event EventHandler? AnimationEndedEvent;
+  public event EventHandler? ContentMouseDownEvent;
 
-  private void _raiseAnimationEnded() => AnimationEndedEvent(this, EventArgs.Empty);
-  private void _raiseContentMouseDown() => ContentMouseDownEvent(this, EventArgs.Empty);
+  private void _raiseAnimationEnded() => AnimationEndedEvent?.Invoke(this, EventArgs.Empty);
+  private void _raiseContentMouseDown() => ContentMouseDownEvent?.Invoke(this, EventArgs.Empty);
+
+  private void _setHost(IZoomAndPanHost? host) {
+    if (_host == host) return;
+    
+    if (_host != null) {
+      _host.HostMouseDownEvent -= _onHostMouseDown;
+      _host.HostMouseMoveEvent -= _onHostMouseMove;
+      _host.HostMouseUpEvent -= _onHostMouseUp;
+      _host.HostMouseWheelEvent -= _onHostMouseWheel;
+      _host.HostSizeChangedEvent -= _onHostSizeChanged;
+    }
+
+    _host = host;
+    if (_host == null) return;
+
+    _host.HostMouseDownEvent += _onHostMouseDown;
+    _host.HostMouseMoveEvent += _onHostMouseMove;
+    _host.HostMouseUpEvent += _onHostMouseUp;
+    _host.HostMouseWheelEvent += _onHostMouseWheel;
+    _host.HostSizeChangedEvent += _onHostSizeChanged;
+  } 
 
   private void _setScale(double scale, double relativeX, double relativeY) {
     var absoluteX = (relativeX * _scaleX) + _transformX;
@@ -75,9 +104,9 @@ public class ZoomAndPan : ObservableObject {
   }
 
   private double _getFitScale(double hostW, double hostH) {
-    double scaleW = hostW / _contentWidth;
-    double scaleH = hostH / _contentHeight;
-    double scale = 1.0;
+    var scaleW = hostW / _contentWidth;
+    var scaleH = hostH / _contentHeight;
+    var scale = 1.0;
 
     if (_shrinkToFill && (_contentWidth > hostW || _contentHeight > hostH)) {
       scale = Math.Min(scaleW, scaleH);
@@ -141,37 +170,37 @@ public class ZoomAndPan : ObservableObject {
     Host?.StopAnimation();
   }
 
-  public void OnHostSizeChanged() =>
+  private void _onHostSizeChanged(object? o, EventArgs e) =>
     ScaleToFit();
 
-  public void OnHostMouseMove(double hostPosX, double hostPosY) {
-    TransformX = _originX - (_startX - hostPosX);
-    TransformY = _originY - (_startY - hostPosY);
+  private void _onHostMouseMove(object? o, PointD hostPos) {
+    TransformX = _originX - (_startX - hostPos.X);
+    TransformY = _originY - (_startY - hostPos.Y);
   }
 
-  public void OnContentMouseDown(double hostPosX, double hostPosY, double contentPosX, double contentPosY) {
+  private void _onHostMouseDown(object? o, (PointD host, PointD content) pos) {
     _raiseContentMouseDown();
 
     if (!_isZoomed)
-      _setScale(1, contentPosX, contentPosY);
+      _setScale(1, pos.content.X, pos.content.Y);
 
-    _startX = hostPosX;
-    _startY = hostPosY;
+    _startX = pos.host.X;
+    _startY = pos.host.Y;
     _originX = _transformX;
     _originY = _transformY;
   }
 
-  public void OnContentMouseUp() {
+  private void _onHostMouseUp(object? o, EventArgs e) {
     if (!_isZoomed)
       ScaleToFit();
   }
 
-  public void OnContentMouseWheel(int delta, double contentPosX, double contentPosY) {
-    if (!Keyboard.IsCtrlOn() || (!(delta > 0) && (_scaleX < .2 || _scaleY < .2))) return;
+  private void _onHostMouseWheel(object? o, (int delta, PointD contentPos) e) {
+    if (!Keyboard.IsCtrlOn() || (!(e.delta > 0) && (_scaleX < .2 || _scaleY < .2))) return;
 
     _isZoomed = true;
-    var scale = _scaleX + (delta > 0 ? .1 : -.1);
-    _setScale(scale, contentPosX, contentPosY);
+    var scale = _scaleX + (e.delta > 0 ? .1 : -.1);
+    _setScale(scale, e.contentPos.X, e.contentPos.Y);
   }
 
   public bool IsContentPanoramic() =>
