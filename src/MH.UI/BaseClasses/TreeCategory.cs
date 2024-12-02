@@ -18,31 +18,31 @@ public class TreeCategory : TreeItem, ITreeCategory {
   public TreeView<ITreeItem> TreeView { get; }
 
   public static RelayCommand<ITreeItem> ItemCreateCommand { get; } = new(
-    item => GetCategory(item)?.ItemCreate(item!), null, "New");
+    item => _getCategory(item)?.ItemCreate(item!), null, "New");
 
   public static RelayCommand<ITreeItem> ItemRenameCommand { get; } = new(
-    item => GetCategory(item)?.ItemRename(item!), null, "Rename");
+    item => _getCategory(item)?.ItemRename(item!), null, "Rename");
 
   public static RelayCommand<ITreeItem> ItemDeleteCommand { get; } = new(
-    item => GetCategory(item)?.ItemDelete(item!), null, "Delete");
+    item => _getCategory(item)?.ItemDelete(item!), null, "Delete");
 
   public static RelayCommand<ITreeItem> ItemMoveToGroupCommand { get; } = new(
-    item => GetCategory(item)?.ItemMoveToGroup(item!), null, "Move to group");
+    item => _getCategory(item)?.ItemMoveToGroup(item!), null, "Move to group");
 
   public static RelayCommand<ITreeCategory> GroupCreateCommand { get; } = new(
-    item => GetCategory(item)?.GroupCreate(item!), null, "New Group");
+    item => _getCategory(item)?.GroupCreate(item!), null, "New Group");
 
   public static RelayCommand<ITreeGroup> GroupRenameCommand { get; } = new(
-    item => GetCategory(item)?.GroupRename(item!), null, "Rename Group");
+    item => _getCategory(item)?.GroupRename(item!), null, "Rename Group");
 
   public static RelayCommand<ITreeGroup> GroupDeleteCommand { get; } = new(
-    item => GetCategory(item)?.GroupDelete(item!), null, "Delete Group");
+    item => _getCategory(item)?.GroupDelete(item!), null, "Delete Group");
 
   public TreeCategory(TreeView<ITreeItem> treeView, string icon, string name, int id) : base(icon, name) {
     Id = id;
     TreeView = treeView;
     TreeView.RootHolder.Add(this);
-    TreeView.ItemSelectedEvent += (_, e) => OnItemSelected(e.Data);
+    TreeView.ItemSelectedEvent += (_, e) => _onItemSelected(e.Data);
   }
 
   public virtual void ItemCreate(ITreeItem parent) => throw new NotImplementedException();
@@ -54,15 +54,15 @@ public class TreeCategory : TreeItem, ITreeCategory {
   public virtual void GroupDelete(ITreeGroup group) => throw new NotImplementedException();
   public virtual void GroupMove(ITreeGroup group, ITreeGroup dest, bool aboveDest) => throw new NotImplementedException();
 
-  public virtual void OnItemSelected(object item) { }
+  protected virtual void _onItemSelected(object item) { }
 
   public virtual bool CanDrop(object? src, ITreeItem? dest) =>
-    CanDrop(src as ITreeItem, dest);
+    _canDrop(src as ITreeItem, dest);
 
   public virtual void OnDrop(object src, ITreeItem dest, bool aboveDest, bool copy) =>
     throw new NotImplementedException();
 
-  public static bool CanDrop(ITreeItem? src, ITreeItem? dest) {
+  private static bool _canDrop(ITreeItem? src, ITreeItem? dest) {
     if (src == null || dest == null || ReferenceEquals(src, dest) ||
         ReferenceEquals(src.Parent, dest) || ReferenceEquals(dest.Parent, src) ||
         (src is ITreeGroup && dest is not ITreeGroup)) return false;
@@ -93,27 +93,24 @@ public class TreeCategory : TreeItem, ITreeCategory {
     return result == 1;
   }
 
-  private static ITreeCategory? GetCategory(ITreeItem? item) =>
+  private static ITreeCategory? _getCategory(ITreeItem? item) =>
     Tree.GetParentOf<ITreeCategory>(item);
 }
 
-public class TreeCategory<TI> : TreeCategory where TI : class, ITreeItem {
+public class TreeCategory<TI>(TreeView<ITreeItem> treeView, string icon, string name, int id, ITreeDataAdapter<TI> dataAdapter)
+  : TreeCategory(treeView, icon, name, id) where TI : class, ITreeItem {
+
   public bool ScrollToAfterCreate { get; set; }
-  protected ITreeDataAdapter<TI> DataAdapter { get; }
+  protected ITreeDataAdapter<TI> _dataAdapter = dataAdapter;
 
-  public event EventHandler<TreeItemDroppedEventArgs> AfterDropEvent = delegate { };
-
-  public TreeCategory(TreeView<ITreeItem> treeView, string icon, string name, int id, ITreeDataAdapter<TI> dataAdapter)
-    : base(treeView, icon, name, id) {
-    DataAdapter = dataAdapter;
-  }
+  public event EventHandler<TreeItemDroppedEventArgs>? AfterDropEvent;
 
   public override void ItemCreate(ITreeItem parent) {
-    if (!GetNewName(true, string.Empty, out var newName, parent, DataAdapter.ValidateNewItemName, Icon!)) return;
+    if (!GetNewName(true, string.Empty, out var newName, parent, _dataAdapter.ValidateNewItemName, Icon!)) return;
 
     try {
       parent.IsExpanded = true;
-      var item = DataAdapter.ItemCreate(parent, newName);
+      var item = _dataAdapter.ItemCreate(parent, newName);
       if (ScrollToAfterCreate) TreeView.ScrollTo(item, false);
     }
     catch (Exception ex) {
@@ -122,10 +119,10 @@ public class TreeCategory<TI> : TreeCategory where TI : class, ITreeItem {
   }
 
   public override void ItemRename(ITreeItem item) {
-    if (!GetNewName(true, item.Name, out var newName, item, DataAdapter.ValidateNewItemName, Icon!)) return;
+    if (!GetNewName(true, item.Name, out var newName, item, _dataAdapter.ValidateNewItemName, Icon!)) return;
 
     try {
-      DataAdapter.ItemRename(item, newName);
+      _dataAdapter.ItemRename(item, newName);
     }
     catch (Exception ex) {
       Log.Error(ex);
@@ -133,13 +130,13 @@ public class TreeCategory<TI> : TreeCategory where TI : class, ITreeItem {
   }
 
   public override void ItemDelete(ITreeItem item) {
-    if (!DeleteAccepted(item.Name)) return;
+    if (!_deleteAccepted(item.Name)) return;
 
     try {
       if (UseTreeDelete)
-        DataAdapter.TreeItemDelete(item);
+        _dataAdapter.TreeItemDelete(item);
       else
-        DataAdapter.ItemDelete(item);
+        _dataAdapter.ItemDelete(item);
 
       // collapse parent if doesn't have any sub items
       if (item.Parent is { Items.Count: 0 } parent)
@@ -167,15 +164,15 @@ public class TreeCategory<TI> : TreeCategory where TI : class, ITreeItem {
     // items
     if (src is ITreeItem srcItem) {
       if (copy)
-        DataAdapter.ItemCopy(srcItem, dest);
+        _dataAdapter.ItemCopy(srcItem, dest);
       else
-        DataAdapter.ItemMove(srcItem, dest, aboveDest);
+        _dataAdapter.ItemMove(srcItem, dest, aboveDest);
     }
 
-    AfterDropEvent(this, new(src, dest, aboveDest, copy));
+    AfterDropEvent?.Invoke(this, new(src, dest, aboveDest, copy));
   }
 
-  protected static bool DeleteAccepted(string name) =>
+  protected static bool _deleteAccepted(string name) =>
     Dialog.Show(new MessageDialog(
       "Delete Confirmation",
       $"Do you really want to delete '{name}'?",
@@ -183,32 +180,29 @@ public class TreeCategory<TI> : TreeCategory where TI : class, ITreeItem {
       true)) == 1;
 }
 
-public class TreeCategory<TI, TG> : TreeCategory<TI> where TI : class, ITreeItem where TG : class, ITreeItem  {
-  protected ITreeDataAdapter<TG> GroupDataAdapter { get; set; }
+public class TreeCategory<TI, TG>(TreeView<ITreeItem> treeView, string icon, string name, int id, ITreeDataAdapter<TI> da, ITreeDataAdapter<TG> gda)
+  : TreeCategory<TI>(treeView, icon, name, id, da) where TI : class, ITreeItem where TG : class, ITreeItem {
 
-  public TreeCategory(TreeView<ITreeItem> treeView, string icon, string name, int id, ITreeDataAdapter<TI> da,
-    ITreeDataAdapter<TG> gda) : base(treeView, icon, name, id, da) {
-    GroupDataAdapter = gda;
-  }
+  protected ITreeDataAdapter<TG> _groupDataAdapter = gda;
 
   public override void GroupCreate(ITreeItem parent) {
-    if (!GetNewName(false, string.Empty, out var newName, parent, GroupDataAdapter.ValidateNewItemName, Icon!)) return;
+    if (!GetNewName(false, string.Empty, out var newName, parent, _groupDataAdapter.ValidateNewItemName, Icon!)) return;
     
-    GroupDataAdapter.ItemCreate(parent, newName);
+    _groupDataAdapter.ItemCreate(parent, newName);
   }
 
   public override void GroupRename(ITreeGroup group) {
-    if (!GetNewName(false, group.Name, out var newName, group, GroupDataAdapter.ValidateNewItemName, Icon!)) return;
+    if (!GetNewName(false, group.Name, out var newName, group, _groupDataAdapter.ValidateNewItemName, Icon!)) return;
 
-    GroupDataAdapter.ItemRename(group, newName);
+    _groupDataAdapter.ItemRename(group, newName);
   }
 
   public override void GroupMove(ITreeGroup group, ITreeGroup dest, bool aboveDest) =>
-    GroupDataAdapter.ItemMove(group, dest, aboveDest);
+    _groupDataAdapter.ItemMove(group, dest, aboveDest);
 
   public override void GroupDelete(ITreeGroup group) {
-    if (!DeleteAccepted(group.Name)) return;
+    if (!_deleteAccepted(group.Name)) return;
     
-    GroupDataAdapter.ItemDelete(group);
+    _groupDataAdapter.ItemDelete(group);
   }
 }
