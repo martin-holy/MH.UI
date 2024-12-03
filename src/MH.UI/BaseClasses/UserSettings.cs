@@ -23,13 +23,13 @@ public abstract class UserSettings {
     SaveCommand = new(Save, () => Modified, Res.IconSave, "Save");
   }
 
-  protected void WatchForChanges() {
+  protected void _watchForChanges() {
     foreach (var item in Groups.Select(x => x.Data).OfType<ObservableObject>())
       item.PropertyChanged += delegate { Modified = true; };
   }
 
   public static T? DeserializeGroup<T>(JsonElement root, string name) =>
-    root.TryGetProperty(name, out JsonElement elm)
+    root.TryGetProperty(name, out var elm)
       ? JsonSerializer.Deserialize<T>(elm.GetRawText())
       : default;
 
