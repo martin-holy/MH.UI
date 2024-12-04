@@ -16,9 +16,10 @@ public class GroupByDialog<T> : Dialog where T : class, ISelectable {
   public bool IsThenBy { get => _isThenBy; set { _isThenBy = value; OnPropertyChanged(); } }
 
   public GroupByDialog() : base("Chose items for grouping", Res.IconGroup) {
-    Buttons = new DialogButton[] {
+    Buttons = [
       new(OkCommand, true),
-      new(CancelCommand, false, true) };
+      new(CancelCommand, false, true)
+    ];
   }
 
   public bool Open(CollectionViewGroup<T> group, IEnumerable<GroupByItem<T>> items) {
