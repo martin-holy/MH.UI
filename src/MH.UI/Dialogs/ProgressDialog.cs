@@ -22,7 +22,7 @@ public class ProgressDialog<T> : Dialog {
   public AsyncRelayCommand ActionCommand { get; }
 
   public ProgressDialog(string title, string icon, T[] items, string? actionIcon = null, string? actionText = null, bool autoClose = true) : base(title, icon) {
-    ActionCommand = new(DoAction, CanAction, actionIcon, actionText);
+    ActionCommand = new(_doAction, _canAction, actionIcon, actionText);
     _items = items;
     _autoClose = autoClose;
     _progressMax = _items.Length;
@@ -30,7 +30,7 @@ public class ProgressDialog<T> : Dialog {
     _progress = new Progress<(int, string, object?)>(x => {
       ProgressValue = x.Item1;
       ProgressText = x.Item2;
-      CustomProgress(x.Item3);
+      _customProgress(x.Item3);
     });
 
     Buttons = actionIcon == null && actionText == null
@@ -38,52 +38,52 @@ public class ProgressDialog<T> : Dialog {
       : [new(ActionCommand, true), new(CloseCommand, false, true)];
   }
 
-  protected void AutoRun() {
+  protected void _autoRun() {
     if (ActionCommand.CanExecute(null))
       ActionCommand.Execute(null);
   }
 
-  protected void ReportProgress(string msg) =>
-    ReportProgress(msg, null);
+  protected void _reportProgress(string msg) =>
+    _reportProgress(msg, null);
 
-  protected virtual void ReportProgress(string msg, object? args) =>
+  protected virtual void _reportProgress(string msg, object? args) =>
     _progress.Report((++_progressIndex, msg, args));
 
-  protected virtual void CustomProgress(object? args) { }
+  protected virtual void _customProgress(object? args) { }
 
   protected override Task _onResultChanged(int result) {
     if (result == 0) ActionCommand.CancelCommand.Execute(null);
     return Task.CompletedTask;
   }
 
-  protected virtual bool CanAction() => true;
+  protected virtual bool _canAction() => true;
 
-  protected virtual bool DoBefore() => true;
+  protected virtual bool _doBefore() => true;
 
-  protected virtual Task Do(T item, CancellationToken token) => Task.CompletedTask;
+  protected virtual Task _do(T item, CancellationToken token) => Task.CompletedTask;
 
-  protected virtual async Task Do(T[] items, CancellationToken token) {
+  protected virtual async Task _do(T[] items, CancellationToken token) {
     foreach (var item in _items) {
       if (token.IsCancellationRequested) break;
-      await Do(item, token).ConfigureAwait(false);
+      await _do(item, token).ConfigureAwait(false);
     }
   }
 
-  protected virtual void DoAfter() { }
+  protected virtual void _doAfter() { }
 
-  private async Task DoAction(CancellationToken token) {
+  private async Task _doAction(CancellationToken token) {
     try {
-      if (!DoBefore()) return;
+      if (!_doBefore()) return;
 
       _progressIndex = 0;
 
       if (RunSync)
-        await Do(_items, token);
+        await _do(_items, token);
       else
-        await Task.Run(async () => { await Do(_items, token).ConfigureAwait(false); }, token);
+        await Task.Run(async () => { await _do(_items, token).ConfigureAwait(false); }, token);
     }
     finally {
-      DoAfter();
+      _doAfter();
       if (_autoClose) Result = 1;
     }
   }
