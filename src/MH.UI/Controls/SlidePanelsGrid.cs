@@ -17,13 +17,13 @@ public class SlidePanelsGrid : ObservableObject {
   public SlidePanel? PanelRight { get; }
   public SlidePanel? PanelBottom { get; }
   public object PanelMiddle { get; }
-  public double PanelTopGridHeight { get => _panelTopGridHeight; set => SetIfVary(ref _panelTopGridHeight, value); }
-  public double PanelBottomGridHeight { get => _panelBottomGridHeight; set => SetIfVary(ref _panelBottomGridHeight, value); }
+  public double PanelTopGridHeight { get => _panelTopGridHeight; set => _setIfVary(ref _panelTopGridHeight, value); }
+  public double PanelBottomGridHeight { get => _panelBottomGridHeight; set => _setIfVary(ref _panelBottomGridHeight, value); }
 
   public double PanelLeftGridWidth {
     get => _panelLeftGridWidth;
     set {
-      if (SetIfVary(ref _panelLeftGridWidth, value))
+      if (_setIfVary(ref _panelLeftGridWidth, value))
         PanelLeft?.SetSize(value);
     }
   }
@@ -31,7 +31,7 @@ public class SlidePanelsGrid : ObservableObject {
   public double PanelRightGridWidth {
     get => _panelRightGridWidth;
     set {
-      if (SetIfVary(ref _panelRightGridWidth, value))
+      if (_setIfVary(ref _panelRightGridWidth, value))
         PanelRight?.SetSize(value);
     }
   }
