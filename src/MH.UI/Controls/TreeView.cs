@@ -30,7 +30,7 @@ public class TreeView<T> : ObservableObject, ITreeView where T : class, ITreeIte
   public RelayCommand ScrollSiblingUpCommand { get; }
   public RelayCommand ScrollLevelUpCommand { get; }
   public AsyncRelayCommand<ITreeItem> SelectItemCommand { get; }
-  public event EventHandler<ObjectEventArgs<T>>? ItemSelectedEvent;
+  public event EventHandler<T>? ItemSelectedEvent;
 
   public TreeView() {
     ScrollToItemCommand = new(x => ScrollTo(x));
@@ -40,7 +40,7 @@ public class TreeView<T> : ObservableObject, ITreeView where T : class, ITreeIte
     SelectItemCommand = new((item, token) => SelectItem((T)item!, token), item => item is T);
   }
 
-  protected void _raiseItemSelected(T item) => ItemSelectedEvent?.Invoke(this, new(item));
+  protected void _raiseItemSelected(T item) => ItemSelectedEvent?.Invoke(this, item);
 
   protected virtual Task _onItemSelected(T item, CancellationToken token) => Task.CompletedTask;
 
