@@ -176,7 +176,7 @@ public sealed class MediaPlayer : ObservableObject {
   public Action<bool, bool>? SelectNextItemAction { get; set; }
   public Action? OnItemDeleteAction { get; set; }
 
-  public event EventHandler<ObjectEventArgs<Tuple<IVideoItem, bool>>>? MarkerSetEvent;
+  public event EventHandler<Tuple<IVideoItem, bool>>? MarkerSetEvent;
   public event EventHandler? MediaEndedEvent;
 
   public MediaPlayer() {
@@ -210,7 +210,7 @@ public sealed class MediaPlayer : ObservableObject {
     _timelineTimer.Dispose();
   }
 
-  private void _raiseMarkerSet(Tuple<IVideoItem, bool> args) => MarkerSetEvent?.Invoke(this, new(args));
+  private void _raiseMarkerSet(Tuple<IVideoItem, bool> args) => MarkerSetEvent?.Invoke(this, args);
   private void _raiseMediaEnded() => MediaEndedEvent?.Invoke(this, EventArgs.Empty);
 
   private void _timelineSliderValueChanged(PropertyChangedEventArgs<double>? value) {
