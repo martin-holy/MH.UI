@@ -79,7 +79,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
   public RelayCommand<CollectionViewGroup<T>> ShuffleCommand { get; }
   public RelayCommand<CollectionViewGroup<T>> SortCommand { get; }
 
-  public event EventHandler<ObjectEventArgs<T>>? ItemOpenedEvent;
+  public event EventHandler<T>? ItemOpenedEvent;
   public new event EventHandler<SelectionEventArgs<T>>? ItemSelectedEvent;
   public event EventHandler? FilterAppliedEvent;
 
@@ -92,7 +92,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
     SortCommand = new(_sort, Res.IconSort, "Sort");
   }
 
-  protected void _raiseItemOpened(T item) => ItemOpenedEvent?.Invoke(this, new(item));
+  protected void _raiseItemOpened(T item) => ItemOpenedEvent?.Invoke(this, item);
   protected void _raiseItemSelected(SelectionEventArgs<T> args) => ItemSelectedEvent?.Invoke(this, args);
   protected void _raiseFilterApplied() => FilterAppliedEvent?.Invoke(this, EventArgs.Empty);
 
