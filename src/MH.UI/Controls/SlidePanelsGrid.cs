@@ -1,15 +1,23 @@
 ﻿using MH.Utils.BaseClasses;
 using MH.Utils.Extensions;
+using MH.Utils.Types;
+using System;
 
 namespace MH.UI.Controls;
 
+public interface ISlidePanelsGridHost {
+  public event EventHandler<(PointD Position, double Width, double Height)>? HostMouseMoveEvent;
+}
+
 public class SlidePanelsGrid : ObservableObject {
+  private ISlidePanelsGridHost? _host;
   private int _activeLayout;
   private double _panelTopGridHeight;
   private double _panelLeftGridWidth;
   private double _panelRightGridWidth;
   private double _panelBottomGridHeight;
 
+  public ISlidePanelsGridHost? Host { get => _host; set => _setHost(value); }
   public int ActiveLayout { get => _activeLayout; set => _onActivateLayoutChanged(value); }
   public bool[][] PinLayouts { get; }
   public SlidePanel? PanelLeft { get; }
@@ -81,12 +89,25 @@ public class SlidePanelsGrid : ObservableObject {
     else if (ReferenceEquals(panel, PanelBottom)) PanelBottomGridHeight = size;
   }
 
-  public void OnMouseMove(double posX, double posY, double width, double height) {
+  private void _setHost(ISlidePanelsGridHost? host) {
+    if (ReferenceEquals(_host, host)) return;
+    
+    if (_host != null)
+      _host.HostMouseMoveEvent -= _onHostMouseMove;
+
+    _host = host;
+    if (_host == null) return;
+
+    _host.HostMouseMoveEvent += _onHostMouseMove;
+  }
+
+  private void _onHostMouseMove(object? sender, (PointD Position, double Width, double Height) e) {
     // to stop opening/closing panel by itself in some cases
-    if ((posX == 0 && posY == 0) || posX < 0 || posY < 0) return;
-    PanelLeft?.OnMouseMove(size => posX > size, posX < 5);
-    PanelTop?.OnMouseMove(size => posY > size, posY < 5);
-    PanelRight?.OnMouseMove(size => posX < width - size, posX > width - 5);
-    PanelBottom?.OnMouseMove(size => posY < height - size, posY > height - 5);
+    if (e.Position is { X: 0, Y: 0 } || e.Position.X < 0 || e.Position.Y < 0) return;
+
+    PanelLeft?.OnMouseMove(size => e.Position.X > size, e.Position.X < 5);
+    PanelTop?.OnMouseMove(size => e.Position.Y > size, e.Position.Y < 5);
+    PanelRight?.OnMouseMove(size => e.Position.X < e.Width - size, e.Position.X > e.Width - 5);
+    PanelBottom?.OnMouseMove(size => e.Position.Y < e.Height - size, e.Position.Y > e.Height - 5);
   }
 }
