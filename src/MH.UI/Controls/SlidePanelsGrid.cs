@@ -12,10 +12,6 @@ public interface ISlidePanelsGridHost {
 public class SlidePanelsGrid : ObservableObject {
   private ISlidePanelsGridHost? _host;
   private int _activeLayout;
-  private double _panelTopGridHeight;
-  private double _panelLeftGridWidth;
-  private double _panelRightGridWidth;
-  private double _panelBottomGridHeight;
 
   public ISlidePanelsGridHost? Host { get => _host; set => _setHost(value); }
   public int ActiveLayout { get => _activeLayout; set => _onActivateLayoutChanged(value); }
@@ -25,24 +21,6 @@ public class SlidePanelsGrid : ObservableObject {
   public SlidePanel? PanelRight { get; }
   public SlidePanel? PanelBottom { get; }
   public object PanelMiddle { get; }
-  public double PanelTopGridHeight { get => _panelTopGridHeight; set => _setIfVary(ref _panelTopGridHeight, value); }
-  public double PanelBottomGridHeight { get => _panelBottomGridHeight; set => _setIfVary(ref _panelBottomGridHeight, value); }
-
-  public double PanelLeftGridWidth {
-    get => _panelLeftGridWidth;
-    set {
-      if (_setIfVary(ref _panelLeftGridWidth, value))
-        PanelLeft?.SetSize(value);
-    }
-  }
-
-  public double PanelRightGridWidth {
-    get => _panelRightGridWidth;
-    set {
-      if (_setIfVary(ref _panelRightGridWidth, value))
-        PanelRight?.SetSize(value);
-    }
-  }
 
   public static RelayCommand<SlidePanel> PinCommand { get; } = new(x => x!.IsPinned = !x.IsPinned, x => x != null);
 
@@ -53,8 +31,6 @@ public class SlidePanelsGrid : ObservableObject {
     PanelBottom = bottom;
     PanelMiddle = middle;
     PinLayouts = pinLayouts;
-    PanelLeftGridWidth = PanelLeft?.Size ?? 0;
-    PanelRightGridWidth = PanelRight?.Size ?? 0;
     ActiveLayout = 0;
     _initPanel(PanelLeft);
     _initPanel(PanelTop);
@@ -67,7 +43,6 @@ public class SlidePanelsGrid : ObservableObject {
     panel.PropertyChanged += (_, e) => {
       if (!e.Is(nameof(panel.IsPinned))) return;
       PinLayouts[ActiveLayout][(int)panel.Dock] = panel.IsPinned;
-      SetPin(panel);
     };
   }
 
@@ -79,14 +54,6 @@ public class SlidePanelsGrid : ObservableObject {
     if (PanelTop != null) PanelTop.IsPinned = activeLayout[1];
     if (PanelRight != null) PanelRight.IsPinned = activeLayout[2];
     if (PanelBottom != null) PanelBottom.IsPinned = activeLayout[3];
-  }
-
-  public void SetPin(SlidePanel panel) {
-    var size = panel.IsPinned ? panel.Size : 0;
-    if (ReferenceEquals(panel, PanelLeft)) PanelLeftGridWidth = size;
-    else if (ReferenceEquals(panel, PanelTop)) PanelTopGridHeight = size;
-    else if (ReferenceEquals(panel, PanelRight)) PanelRightGridWidth = size;
-    else if (ReferenceEquals(panel, PanelBottom)) PanelBottomGridHeight = size;
   }
 
   private void _setHost(ISlidePanelsGridHost? host) {
@@ -105,9 +72,9 @@ public class SlidePanelsGrid : ObservableObject {
     // to stop opening/closing panel by itself in some cases
     if (e.Position is { X: 0, Y: 0 } || e.Position.X < 0 || e.Position.Y < 0) return;
 
-    PanelLeft?.OnMouseMove(size => e.Position.X > size, e.Position.X < 5);
-    PanelTop?.OnMouseMove(size => e.Position.Y > size, e.Position.Y < 5);
-    PanelRight?.OnMouseMove(size => e.Position.X < e.Width - size, e.Position.X > e.Width - 5);
-    PanelBottom?.OnMouseMove(size => e.Position.Y < e.Height - size, e.Position.Y > e.Height - 5);
+    PanelLeft?.OnGridMouseMove(size => e.Position.X > size, e.Position.X < 5);
+    PanelTop?.OnGridMouseMove(size => e.Position.Y > size, e.Position.Y < 5);
+    PanelRight?.OnGridMouseMove(size => e.Position.X < e.Width - size, e.Position.X > e.Width - 5);
+    PanelBottom?.OnGridMouseMove(size => e.Position.Y < e.Height - size, e.Position.Y > e.Height - 5);
   }
 }
