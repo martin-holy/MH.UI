@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace MH.UI.Controls;
 
-public abstract class CollectionView : TreeView<ITreeItem> {
+public abstract class CollectionView : TreeView {
   public enum ViewMode { Content, Details, List, ThumbBig, ThumbMedium, ThumbSmall, Tiles }
 
   protected ViewMode[] ViewModes { get; }

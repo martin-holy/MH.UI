@@ -10,12 +10,12 @@ using System.Threading.Tasks;
 
 namespace MH.UI.Controls;
 
-public class TreeView<T> : ObservableObject, ITreeView where T : class, ITreeItem {
+public class TreeView : ObservableObject, ITreeView {
   private ITreeItem? _topTreeItem;
   private bool _isVisible;
 
   public ExtObservableCollection<object> RootHolder { get; } = [];
-  public Selecting<T> SelectedTreeItems { get; } = new();
+  public Selecting<ITreeItem> SelectedTreeItems { get; } = new();
   public ITreeItem? TopTreeItem { get => _topTreeItem; set { _topTreeItem = value; _onTopTreeItemChanged(); } }
   public bool IsVisible { get => _isVisible; set { _isVisible = value; _onIsVisibleChanged(); } }
   public ITreeItem[] TopTreeItemPath => _topTreeItem == null ? [] : _topTreeItem.GetThisAndParents().Skip(1).Reverse().Skip(1).ToArray();
@@ -30,30 +30,30 @@ public class TreeView<T> : ObservableObject, ITreeView where T : class, ITreeIte
   public RelayCommand ScrollSiblingUpCommand { get; }
   public RelayCommand ScrollLevelUpCommand { get; }
   public AsyncRelayCommand<ITreeItem> SelectItemCommand { get; }
-  public event EventHandler<T>? ItemSelectedEvent;
+  public event EventHandler<ITreeItem>? ItemSelectedEvent;
 
   public TreeView() {
     ScrollToItemCommand = new(x => ScrollTo(x));
     ScrollToTopCommand = new(() => ScrollToTopAction?.Invoke());
     ScrollSiblingUpCommand = new(() => TopTreeItem?.GetPreviousSibling());
     ScrollLevelUpCommand = new(() => ScrollTo(TopTreeItem?.Parent));
-    SelectItemCommand = new((item, token) => SelectItem((T)item!, token), item => item is T);
+    SelectItemCommand = new((item, token) => SelectItem(item!, token), item => item != null);
   }
 
-  protected void _raiseItemSelected(T item) => ItemSelectedEvent?.Invoke(this, item);
+  protected void _raiseItemSelected(ITreeItem item) => ItemSelectedEvent?.Invoke(this, item);
 
-  protected virtual Task _onItemSelected(T item, CancellationToken token) => Task.CompletedTask;
+  protected virtual Task _onItemSelected(ITreeItem item, CancellationToken token) => Task.CompletedTask;
 
   protected virtual void _onIsVisibleChanged() {
     if (IsVisible) ScrollTo(TopTreeItem);
   }
 
-  public virtual async Task SelectItem(T item, CancellationToken token) {
+  public virtual async Task SelectItem(ITreeItem item, CancellationToken token) {
     _raiseItemSelected(item);
     await _onItemSelected(item, token);
 
     if (ShowTreeItemSelection)
-      SelectedTreeItems.Select(item.Parent?.Items.Cast<T>().ToList(), item, Keyboard.IsCtrlOn(), Keyboard.IsShiftOn());
+      SelectedTreeItems.Select(item.Parent?.Items.ToList(), item, Keyboard.IsCtrlOn(), Keyboard.IsShiftOn());
   }
 
   protected virtual void _onTopTreeItemChanged() =>

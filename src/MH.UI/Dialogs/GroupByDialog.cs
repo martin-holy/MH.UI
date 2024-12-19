@@ -10,7 +10,7 @@ public class GroupByDialog<T> : Dialog where T : class, ISelectable {
   private bool _isGroupBy = true;
   private bool _isThenBy;
 
-  public TreeView<GroupByItem<T>> TreeView { get; } = new() { ShowTreeItemSelection = true };
+  public TreeView TreeView { get; } = new() { ShowTreeItemSelection = true };
   public bool IsRecursive { get => _isRecursive; set { _isRecursive = value; OnPropertyChanged(); } }
   public bool IsGroupBy { get => _isGroupBy; set { _isGroupBy = value; OnPropertyChanged(); } }
   public bool IsThenBy { get => _isThenBy; set { _isThenBy = value; OnPropertyChanged(); } }
@@ -46,7 +46,7 @@ public class GroupByDialog<T> : Dialog where T : class, ISelectable {
     group.IsRecursive = IsRecursive;
     group.IsGroupBy = IsGroupBy;
     group.IsThenBy = IsThenBy;
-    group.GroupByItems = TreeView.SelectedTreeItems.Items.ToArray();
+    group.GroupByItems = TreeView.SelectedTreeItems.Items.Cast<GroupByItem<T>>().ToArray();
     group.GroupIt();
     group.View.RemoveEmptyGroups(group, null);
     group.IsExpanded = true;

@@ -15,7 +15,7 @@ public class TreeCategory : TreeItem, ITreeCategory {
   public bool CanCopyItem { get; set; }
   public bool CanMoveItem { get; set; }
   public bool UseTreeDelete { get; set; }
-  public TreeView<ITreeItem> TreeView { get; }
+  public TreeView TreeView { get; }
 
   public static RelayCommand<ITreeItem> ItemCreateCommand { get; } = new(
     item => _getCategory(item)?.ItemCreate(item!), null, "New");
@@ -38,7 +38,7 @@ public class TreeCategory : TreeItem, ITreeCategory {
   public static RelayCommand<ITreeGroup> GroupDeleteCommand { get; } = new(
     item => _getCategory(item)?.GroupDelete(item!), null, "Delete Group");
 
-  public TreeCategory(TreeView<ITreeItem> treeView, string icon, string name, int id) : base(icon, name) {
+  public TreeCategory(TreeView treeView, string icon, string name, int id) : base(icon, name) {
     Id = id;
     TreeView = treeView;
     TreeView.RootHolder.Add(this);
@@ -97,7 +97,7 @@ public class TreeCategory : TreeItem, ITreeCategory {
     Tree.GetParentOf<ITreeCategory>(item);
 }
 
-public class TreeCategory<TI>(TreeView<ITreeItem> treeView, string icon, string name, int id, ITreeDataAdapter<TI> dataAdapter)
+public class TreeCategory<TI>(TreeView treeView, string icon, string name, int id, ITreeDataAdapter<TI> dataAdapter)
   : TreeCategory(treeView, icon, name, id) where TI : class, ITreeItem {
 
   public bool ScrollToAfterCreate { get; set; }
@@ -180,7 +180,7 @@ public class TreeCategory<TI>(TreeView<ITreeItem> treeView, string icon, string 
       true)) == 1;
 }
 
-public class TreeCategory<TI, TG>(TreeView<ITreeItem> treeView, string icon, string name, int id, ITreeDataAdapter<TI> da, ITreeDataAdapter<TG> gda)
+public class TreeCategory<TI, TG>(TreeView treeView, string icon, string name, int id, ITreeDataAdapter<TI> da, ITreeDataAdapter<TG> gda)
   : TreeCategory<TI>(treeView, icon, name, id, da) where TI : class, ITreeItem where TG : class, ITreeItem {
 
   protected ITreeDataAdapter<TG> _groupDataAdapter = gda;
