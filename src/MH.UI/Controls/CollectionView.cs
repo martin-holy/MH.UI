@@ -15,9 +15,22 @@ public abstract class CollectionView : TreeView {
   public enum ViewMode { Content, Details, List, ThumbBig, ThumbMedium, ThumbSmall, Tiles }
 
   protected ViewMode[] ViewModes { get; }
+
+  public object? UIView { get; set; }
+  public bool AddInOrder { get; set; } = true;
+  public bool CanOpen { get; set; } = true;
+  public bool CanSelect { get; set; } = true;
+  public bool IsMultiSelect { get; set; } = true;
+  public int GroupContentOffset { get; set; } = 0;
+  public string Icon { get; set; }
+  public string Name { get; set; }
+
   public RelayCommand<ICollectionViewGroup>[] ViewModesCommands { get; }
 
-  protected CollectionView(ViewMode[] viewModes) {
+  protected CollectionView(string icon, string name, ViewMode[] viewModes) {
+    Icon = icon;
+    Name = name;
+
     if (viewModes.Length == 0)
       throw new ArgumentException("At least one ViewMode must be specified");
 
@@ -27,6 +40,10 @@ public abstract class CollectionView : TreeView {
       .OrderBy(x => x.Text)
       .ToArray();
   }
+
+  public virtual void OpenItem(object? item) { }
+  public virtual void SelectItem(object row, object item, bool isCtrlOn, bool isShiftOn) { }
+  public virtual void SetExpanded(object group) { }
 
   private static readonly Dictionary<ViewMode, string> _viewModeTextMap = new() {
     { ViewMode.Content, "Content" },
@@ -39,7 +56,7 @@ public abstract class CollectionView : TreeView {
   };
 }
 
-public abstract class CollectionView<T> : CollectionView, ICollectionView where T : class, ISelectable {
+public abstract class CollectionView<T> : CollectionView where T : class, ISelectable {
   private readonly HashSet<CollectionViewGroup<T>> _groupByItemsRoots = [];
   private readonly GroupByDialog<T> _groupByDialog = new();
   private readonly HashSet<T> _pendingRemove = [];
@@ -53,14 +70,6 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
   public T? LastSelectedItem { get; protected set; }
   public CollectionViewGroup<T>? TopGroup { get; set; }
   public CollectionViewRow<T>? LastSelectedRow { get; protected set; }
-  public object? UIView { get; set; }
-  public bool AddInOrder { get; set; } = true;
-  public bool CanOpen { get; set; } = true;
-  public bool CanSelect { get; set; } = true;
-  public bool IsMultiSelect { get; set; } = true;
-  public int GroupContentOffset { get; set; } = 0;
-  public string Icon { get; set; }
-  public string Name { get; set; }
 
   public string PositionSlashCount {
     get {
@@ -84,10 +93,8 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
   public new event EventHandler<SelectionEventArgs<T>>? ItemSelectedEvent;
   public event EventHandler? FilterAppliedEvent;
 
-  protected CollectionView(string icon, string name, ViewMode[] viewModes) : base(viewModes) {
+  protected CollectionView(string icon, string name, ViewMode[] viewModes) : base(icon, name, viewModes) {
     Root = new(this, [], null);
-    Icon = icon;
-    Name = name;
     OpenGroupByDialogCommand = new(_openGroupByDialog, Res.IconGroup, "Group by");
     ShuffleCommand = new(_shuffle, Res.IconRandom, "Shuffle");
     SortCommand = new(_sort, Res.IconSort, "Sort");
@@ -104,16 +111,16 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
   protected virtual void _onItemSelected(SelectionEventArgs<T> args) { }
   public virtual string GetItemTemplateName(ViewMode viewMode) => string.Empty;
 
-  public bool IsHitTestItem(ITreeItem item) =>
+  public override bool IsHitTestItem(ITreeItem item) =>
     item is CollectionViewRow<T> or CollectionViewGroup<T>;
 
-  public void OpenItem(object? item) {
+  public override void OpenItem(object? item) {
     if (item is not T i) return;
     _raiseItemOpened(i);
     _onItemOpened(i);
   }
 
-  public void SelectItem(object row, object item, bool isCtrlOn, bool isShiftOn) {
+  public override void SelectItem(object row, object item, bool isCtrlOn, bool isShiftOn) {
     if (row is not CollectionViewRow<T> r || item is not T i) return;
     if (!IsMultiSelect) { isCtrlOn = false; isShiftOn = false; }
     LastSelectedItem = i;
@@ -276,7 +283,7 @@ public abstract class CollectionView<T> : CollectionView, ICollectionView where 
     ScrollTo(TopGroup, TopItem);
   }
 
-  public void SetExpanded(object group) {
+  public override void SetExpanded(object group) {
     if (group is not CollectionViewGroup<T> g) return;
       
     _updateRoot(Root, _ => g.SetExpanded<CollectionViewGroup<T>>(g.IsExpanded));

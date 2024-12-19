@@ -1,5 +1,4 @@
-﻿using MH.UI.Interfaces;
-using MH.Utils;
+﻿using MH.Utils;
 using MH.Utils.BaseClasses;
 using MH.Utils.Interfaces;
 using System;
@@ -10,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace MH.UI.Controls;
 
-public class TreeView : ObservableObject, ITreeView {
+public class TreeView : ObservableObject {
   private ITreeItem? _topTreeItem;
   private bool _isVisible;
 
@@ -69,6 +68,8 @@ public class TreeView : ObservableObject, ITreeView {
     TopTreeItem = item;
     ScrollToItemsAction?.Invoke(branch.Cast<object>().ToArray(), exactly);
   }
+
+  public virtual bool IsHitTestItem(ITreeItem item) => true;
 
   protected void _updateRoot(ITreeItem root, Action<IList<object>> itemsAction) {
     var expand = false;
