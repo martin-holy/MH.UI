@@ -11,12 +11,16 @@ using System.Linq;
 
 namespace MH.UI.Controls;
 
+public interface ICollectionViewHost : ITreeViewHost;
+
 public abstract class CollectionView : TreeView {
+  private ICollectionViewHost? _host;
+
   public enum ViewMode { Content, Details, List, ThumbBig, ThumbMedium, ThumbSmall, Tiles }
 
   protected ViewMode[] ViewModes { get; }
 
-  public object? UIView { get; set; }
+  public new ICollectionViewHost? Host { get => _host; set => _setHost(ref _host, value); }
   public bool AddInOrder { get; set; } = true;
   public bool CanOpen { get; set; } = true;
   public bool CanSelect { get; set; } = true;
@@ -148,7 +152,7 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
 
     TopGroup = null;
     TopItem = default;
-    ScrollToTopAction?.Invoke();
+    Host?.ScrollToTop();
     _updateRoot(root, _ => {
       Root = root;
       Root.GroupIt();

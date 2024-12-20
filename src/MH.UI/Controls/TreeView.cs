@@ -9,10 +9,18 @@ using System.Threading.Tasks;
 
 namespace MH.UI.Controls;
 
+public interface ITreeViewHost {
+  public void ExpandRootWhenReady(ITreeItem root);
+  public void ScrollToTop();
+  public void ScrollToItems(object[] items, bool exactly);
+}
+
 public class TreeView : ObservableObject {
+  private ITreeViewHost? _host;
   private ITreeItem? _topTreeItem;
   private bool _isVisible;
 
+  public ITreeViewHost? Host { get => _host; set => _setHost(ref _host, value); }
   public ExtObservableCollection<object> RootHolder { get; } = [];
   public Selecting<ITreeItem> SelectedTreeItems { get; } = new();
   public ITreeItem? TopTreeItem { get => _topTreeItem; set { _topTreeItem = value; _onTopTreeItemChanged(); } }
@@ -20,9 +28,6 @@ public class TreeView : ObservableObject {
   public ITreeItem[] TopTreeItemPath => _topTreeItem == null ? [] : _topTreeItem.GetThisAndParents().Skip(1).Reverse().Skip(1).ToArray();
   // TODO rename and combine with single and multi select
   public bool ShowTreeItemSelection { get; set; }
-  public Action? ScrollToTopAction { get; set; }
-  public Action<object[], bool>? ScrollToItemsAction { get; set; }
-  public Action<ITreeItem>? ExpandRootWhenReadyAction { get; set; }
 
   public RelayCommand<ITreeItem> ScrollToItemCommand { get; }
   public RelayCommand ScrollToTopCommand { get; }
@@ -33,7 +38,7 @@ public class TreeView : ObservableObject {
 
   public TreeView() {
     ScrollToItemCommand = new(x => ScrollTo(x));
-    ScrollToTopCommand = new(() => ScrollToTopAction?.Invoke());
+    ScrollToTopCommand = new(() => Host?.ScrollToTop());
     ScrollSiblingUpCommand = new(() => TopTreeItem?.GetPreviousSibling());
     ScrollLevelUpCommand = new(() => ScrollTo(TopTreeItem?.Parent));
     SelectItemCommand = new((item, token) => SelectItem(item!, token), item => item != null);
@@ -66,7 +71,7 @@ public class TreeView : ObservableObject {
       branch[i].IsExpanded = true;
 
     TopTreeItem = item;
-    ScrollToItemsAction?.Invoke(branch.Cast<object>().ToArray(), exactly);
+    Host?.ScrollToItems(branch.Cast<object>().ToArray(), exactly);
   }
 
   public virtual bool IsHitTestItem(ITreeItem item) => true;
@@ -83,9 +88,19 @@ public class TreeView : ObservableObject {
 
     if (!expand) return;
 
-    if (ExpandRootWhenReadyAction == null)
+    if (Host == null)
       root.IsExpanded = true;
     else
-      ExpandRootWhenReadyAction(root);
+      Host.ExpandRootWhenReady(root);
   }
+
+  protected void _setHost<T>(ref T? field, T? value) {
+    if (ReferenceEquals(field, value)) return;
+    var oldValue = field;    
+    field = value;
+    _onHostChanged(oldValue, value);
+    OnPropertyChanged(nameof(Host));
+  }
+
+  protected virtual void _onHostChanged(object? oldValue, object? newValue) { }
 }
