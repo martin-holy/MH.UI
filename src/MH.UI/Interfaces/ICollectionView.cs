@@ -4,7 +4,6 @@ using System;
 namespace MH.UI.Interfaces; 
 
 public interface ICollectionViewGroup {
-  public object? UIView { get; }
   public double Width { get; set; }
   public int GetItemSize(object item, bool getWidth);
   public string GetItemTemplateName();

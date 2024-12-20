@@ -21,7 +21,6 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
   private double _width;
 
   public CollectionView<T> View { get; }
-  public object? UIView => View.UIView;
   public CollectionView.ViewMode ViewMode { get; set; }
   public List<T> Source { get; }
   public int SourceCount => Source.Count;
