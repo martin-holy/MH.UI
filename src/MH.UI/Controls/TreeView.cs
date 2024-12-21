@@ -13,18 +13,19 @@ public interface ITreeViewHost {
   public void ExpandRootWhenReady(ITreeItem root);
   public void ScrollToTop();
   public void ScrollToItems(object[] items, bool exactly);
+
+  public event EventHandler<bool>? HostIsVisibleChangedEvent;
 }
 
 public class TreeView : ObservableObject {
   private ITreeViewHost? _host;
   private ITreeItem? _topTreeItem;
-  private bool _isVisible;
 
   public ITreeViewHost? Host { get => _host; set => _setHost(ref _host, value); }
   public ExtObservableCollection<object> RootHolder { get; } = [];
   public Selecting<ITreeItem> SelectedTreeItems { get; } = new();
   public ITreeItem? TopTreeItem { get => _topTreeItem; set { _topTreeItem = value; _onTopTreeItemChanged(); } }
-  public bool IsVisible { get => _isVisible; set { _isVisible = value; _onIsVisibleChanged(); } }
+  public bool IsVisible { get; private set; }
   public ITreeItem[] TopTreeItemPath => _topTreeItem == null ? [] : _topTreeItem.GetThisAndParents().Skip(1).Reverse().Skip(1).ToArray();
   // TODO rename and combine with single and multi select
   public bool ShowTreeItemSelection { get; set; }
@@ -102,5 +103,17 @@ public class TreeView : ObservableObject {
     OnPropertyChanged(nameof(Host));
   }
 
-  protected virtual void _onHostChanged(object? oldValue, object? newValue) { }
+  protected virtual void _onHostChanged(object? oldValue, object? newValue) {
+    if (oldValue is ITreeViewHost oldHost)
+      oldHost.HostIsVisibleChangedEvent -= _onHostIsVisibleChanged;
+
+    if (newValue is ITreeViewHost newHost)
+      newHost.HostIsVisibleChangedEvent += _onHostIsVisibleChanged;
+  }
+
+  private void _onHostIsVisibleChanged(object? sender, bool value) {
+    if (IsVisible == value) return;
+    IsVisible = value;
+    _onIsVisibleChanged();
+  }
 }
