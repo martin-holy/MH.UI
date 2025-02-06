@@ -22,7 +22,7 @@ public class TreeView : ObservableObject {
   private ITreeItem? _topTreeItem;
 
   public ITreeViewHost? Host { get => _host; set => _setHost(ref _host, value); }
-  public ExtObservableCollection<object> RootHolder { get; } = [];
+  public ExtObservableCollection<ITreeItem> RootHolder { get; } = [];
   public Selecting<ITreeItem> SelectedTreeItems { get; } = new();
   public ITreeItem? TopTreeItem { get => _topTreeItem; set { _topTreeItem = value; _onTopTreeItemChanged(); } }
   public bool IsVisible { get; private set; }
@@ -77,7 +77,7 @@ public class TreeView : ObservableObject {
 
   public virtual bool IsHitTestItem(ITreeItem item) => true;
 
-  protected void _updateRoot(ITreeItem root, Action<IList<object>> itemsAction) {
+  protected void _updateRoot(ITreeItem root, Action<IList<ITreeItem>> itemsAction) {
     var expand = false;
     RootHolder.Execute(items => {
       items.Clear();
