@@ -12,7 +12,7 @@ public class TabControl : ObservableObject {
 
   public ObservableCollection<IListItem> Tabs { get; } = [];
   public TabStrip TabStrip { get; set; }
-  public IListItem? Selected { get => _selected; set { _selected = value; OnPropertyChanged(); OnPropertyChanged(nameof(Selected.Data)); } }
+  public IListItem? Selected { get => _selected; set => _setSelected(value); }
   public bool CanCloseTabs { get => _canCloseTabs; set { _canCloseTabs = value; OnPropertyChanged(); OnPropertyChanged(nameof(Selected.Data)); } }
 
   public RelayCommand<IListItem> CloseTabCommand { get; }
@@ -73,5 +73,13 @@ public class TabControl : ObservableObject {
 
   public void UpdateMaxTabSize(double? width, double? height) {
     TabStrip.UpdateMaxTabSize(width, height, Tabs.Count);
+  }
+
+  private void _setSelected(IListItem? item) {
+    if (_selected != null) _selected.IsSelected = false;
+    _selected = item;
+    if (_selected != null) _selected.IsSelected = true;
+    OnPropertyChanged();
+    OnPropertyChanged(nameof(Selected.Data));
   }
 }
