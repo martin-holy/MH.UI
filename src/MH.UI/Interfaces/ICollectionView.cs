@@ -10,6 +10,7 @@ public interface ICollectionViewGroup {
   public void SetViewMode(CollectionView.ViewMode viewMode);
 }
 
+public interface ICollectionViewRow;
 
 public interface ICollectionViewFilter<in T> {
   public bool Filter(T item);
