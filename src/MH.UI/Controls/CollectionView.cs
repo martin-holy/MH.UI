@@ -28,6 +28,7 @@ public abstract class CollectionView : TreeView {
   public int GroupContentOffset { get; set; } = 0;
   public string Icon { get; set; }
   public string Name { get; set; }
+  public bool HasMoreThanOneViewMode => ViewModesCommands.Length > 1;
 
   public RelayCommand<ICollectionViewGroup>[] ViewModesCommands { get; }
 
