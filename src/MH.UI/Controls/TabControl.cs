@@ -79,7 +79,7 @@ public class TabControl : ObservableObject {
     if (_selected != null) _selected.IsSelected = false;
     _selected = item;
     if (_selected != null) _selected.IsSelected = true;
-    OnPropertyChanged();
+    OnPropertyChanged(nameof(Selected));
     OnPropertyChanged(nameof(Selected.Data));
   }
 }
