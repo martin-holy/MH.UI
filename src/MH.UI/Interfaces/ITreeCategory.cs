@@ -1,4 +1,5 @@
-﻿using MH.Utils.Interfaces;
+﻿using System.Threading.Tasks;
+using MH.Utils.Interfaces;
 
 namespace MH.UI.Interfaces; 
 
@@ -7,14 +8,14 @@ public interface ITreeCategory : ITreeItem {
   public bool CanCopyItem { get; set; }
   public bool CanMoveItem { get; set; }
 
-  public void ItemCreate(ITreeItem parent);
-  public void ItemRename(ITreeItem item);
-  public void ItemDelete(ITreeItem item);
+  public Task ItemCreate(ITreeItem parent);
+  public Task ItemRename(ITreeItem item);
+  public Task ItemDelete(ITreeItem item);
   public void ItemMoveToGroup(ITreeItem item);
 
-  public void GroupCreate(ITreeItem parent);
-  public void GroupRename(ITreeGroup group);
-  public void GroupDelete(ITreeGroup group);
+  public Task GroupCreate(ITreeItem parent);
+  public Task GroupRename(ITreeGroup group);
+  public Task GroupDelete(ITreeGroup group);
   public void GroupMove(ITreeGroup group, ITreeGroup dest, bool aboveDest);
 
   public bool CanDrop(object? src, ITreeItem? dest);

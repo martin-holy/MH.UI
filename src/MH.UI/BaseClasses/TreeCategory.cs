@@ -7,6 +7,7 @@ using MH.Utils.EventsArgs;
 using MH.Utils.Interfaces;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MH.UI.BaseClasses;
 
@@ -17,26 +18,26 @@ public class TreeCategory : TreeItem, ITreeCategory {
   public bool UseTreeDelete { get; set; }
   public TreeView TreeView { get; }
 
-  public static RelayCommand<ITreeItem> ItemCreateCommand { get; } = new(
-    item => _getCategory(item)?.ItemCreate(item!), null, "New");
+  public static AsyncRelayCommand<ITreeItem> ItemCreateCommand { get; } = new(
+    (item, _) => _getCategory(item)?.ItemCreate(item!) ?? Task.CompletedTask, null, "New");
 
-  public static RelayCommand<ITreeItem> ItemRenameCommand { get; } = new(
-    item => _getCategory(item)?.ItemRename(item!), null, "Rename");
+  public static AsyncRelayCommand<ITreeItem> ItemRenameCommand { get; } = new(
+    (item, _) => _getCategory(item)?.ItemRename(item!) ?? Task.CompletedTask, null, "Rename");
 
-  public static RelayCommand<ITreeItem> ItemDeleteCommand { get; } = new(
-    item => _getCategory(item)?.ItemDelete(item!), null, "Delete");
+  public static AsyncRelayCommand<ITreeItem> ItemDeleteCommand { get; } = new(
+    (item, _) => _getCategory(item)?.ItemDelete(item!) ?? Task.CompletedTask, null, "Delete");
 
   public static RelayCommand<ITreeItem> ItemMoveToGroupCommand { get; } = new(
     item => _getCategory(item)?.ItemMoveToGroup(item!), null, "Move to group");
 
-  public static RelayCommand<ITreeCategory> GroupCreateCommand { get; } = new(
-    item => _getCategory(item)?.GroupCreate(item!), null, "New Group");
+  public static AsyncRelayCommand<ITreeCategory> GroupCreateCommand { get; } = new(
+    (item, _) => _getCategory(item)?.GroupCreate(item!) ?? Task.CompletedTask, null, "New Group");
 
-  public static RelayCommand<ITreeGroup> GroupRenameCommand { get; } = new(
-    item => _getCategory(item)?.GroupRename(item!), null, "Rename Group");
+  public static AsyncRelayCommand<ITreeGroup> GroupRenameCommand { get; } = new(
+    (item, _) => _getCategory(item)?.GroupRename(item!) ?? Task.CompletedTask, null, "Rename Group");
 
-  public static RelayCommand<ITreeGroup> GroupDeleteCommand { get; } = new(
-    item => _getCategory(item)?.GroupDelete(item!), null, "Delete Group");
+  public static AsyncRelayCommand<ITreeGroup> GroupDeleteCommand { get; } = new(
+    (item, _) => _getCategory(item)?.GroupDelete(item!) ?? Task.CompletedTask, null, "Delete Group");
 
   public TreeCategory(TreeView treeView, string icon, string name, int id) : base(icon, name) {
     Id = id;
@@ -45,13 +46,13 @@ public class TreeCategory : TreeItem, ITreeCategory {
     TreeView.ItemSelectedEvent += (_, item) => _onItemSelected(item);
   }
 
-  public virtual void ItemCreate(ITreeItem parent) => throw new NotImplementedException();
-  public virtual void ItemRename(ITreeItem item) => throw new NotImplementedException();
-  public virtual void ItemDelete(ITreeItem item) => throw new NotImplementedException();
+  public virtual Task ItemCreate(ITreeItem parent) => throw new NotImplementedException();
+  public virtual Task ItemRename(ITreeItem item) => throw new NotImplementedException();
+  public virtual Task ItemDelete(ITreeItem item) => throw new NotImplementedException();
   public virtual void ItemMoveToGroup(ITreeItem item) => throw new NotImplementedException();
-  public virtual void GroupCreate(ITreeItem parent) => throw new NotImplementedException();
-  public virtual void GroupRename(ITreeGroup group) => throw new NotImplementedException();
-  public virtual void GroupDelete(ITreeGroup group) => throw new NotImplementedException();
+  public virtual Task GroupCreate(ITreeItem parent) => throw new NotImplementedException();
+  public virtual Task GroupRename(ITreeGroup group) => throw new NotImplementedException();
+  public virtual Task GroupDelete(ITreeGroup group) => throw new NotImplementedException();
   public virtual void GroupMove(ITreeGroup group, ITreeGroup dest, bool aboveDest) => throw new NotImplementedException();
 
   protected virtual void _onItemSelected(object item) { }
@@ -75,7 +76,7 @@ public class TreeCategory : TreeItem, ITreeCategory {
     return true;
   }
 
-  public static bool GetNewName(bool forItem, string? oldName, out string newName, ITreeItem item, Func<ITreeItem, string?, string?> validator, string icon) {
+  public static async Task<string?> GetNewName(bool forItem, string? oldName, ITreeItem item, Func<ITreeItem, string?, string?> validator, string icon) {
     var action = string.IsNullOrEmpty(oldName) ? "New" : "Rename";
     var target = forItem ? "Item" : "Group";
     var question = string.IsNullOrEmpty(oldName)
@@ -87,10 +88,11 @@ public class TreeCategory : TreeItem, ITreeCategory {
       icon,
       oldName,
       answer => validator(item, answer));
-    var result = Dialog.Show(inputDialog);
-    newName = inputDialog.Answer ?? string.Empty;
+    var result = await Dialog.ShowAsync(inputDialog);
 
-    return result == 1;
+    return result == 1 && !string.IsNullOrEmpty(inputDialog.Answer)
+      ? inputDialog.Answer
+      : string.Empty;
   }
 
   private static ITreeCategory? _getCategory(ITreeItem? item) =>
@@ -105,8 +107,9 @@ public class TreeCategory<TI>(TreeView treeView, string icon, string name, int i
 
   public event EventHandler<TreeItemDroppedEventArgs>? AfterDropEvent;
 
-  public override void ItemCreate(ITreeItem parent) {
-    if (!GetNewName(true, string.Empty, out var newName, parent, _dataAdapter.ValidateNewItemName, Icon!)) return;
+  public override async Task ItemCreate(ITreeItem parent) {
+    var newName = await GetNewName(true, string.Empty, parent, _dataAdapter.ValidateNewItemName, Icon!);
+    if (string.IsNullOrEmpty(newName)) return;
 
     try {
       parent.IsExpanded = true;
@@ -118,8 +121,9 @@ public class TreeCategory<TI>(TreeView treeView, string icon, string name, int i
     }
   }
 
-  public override void ItemRename(ITreeItem item) {
-    if (!GetNewName(true, item.Name, out var newName, item, _dataAdapter.ValidateNewItemName, Icon!)) return;
+  public override async Task ItemRename(ITreeItem item) {
+    var newName = await GetNewName(true, item.Name, item, _dataAdapter.ValidateNewItemName, Icon!);
+    if (string.IsNullOrEmpty(newName)) return;
 
     try {
       _dataAdapter.ItemRename(item, newName);
@@ -129,8 +133,8 @@ public class TreeCategory<TI>(TreeView treeView, string icon, string name, int i
     }
   }
 
-  public override void ItemDelete(ITreeItem item) {
-    if (!_deleteAccepted(item.Name)) return;
+  public override async Task ItemDelete(ITreeItem item) {
+    if (!await _deleteAccepted(item.Name)) return;
 
     try {
       if (UseTreeDelete)
@@ -172,8 +176,8 @@ public class TreeCategory<TI>(TreeView treeView, string icon, string name, int i
     AfterDropEvent?.Invoke(this, new(src, dest, aboveDest, copy));
   }
 
-  protected static bool _deleteAccepted(string name) =>
-    Dialog.Show(new MessageDialog(
+  protected static async Task<bool> _deleteAccepted(string name) =>
+    await Dialog.ShowAsync(new MessageDialog(
       "Delete Confirmation",
       $"Do you really want to delete '{name}'?",
       Res.IconQuestion,
@@ -185,14 +189,16 @@ public class TreeCategory<TI, TG>(TreeView treeView, string icon, string name, i
 
   protected ITreeDataAdapter<TG> _groupDataAdapter = gda;
 
-  public override void GroupCreate(ITreeItem parent) {
-    if (!GetNewName(false, string.Empty, out var newName, parent, _groupDataAdapter.ValidateNewItemName, Icon!)) return;
+  public override async Task GroupCreate(ITreeItem parent) {
+    var newName = await GetNewName(false, string.Empty, parent, _groupDataAdapter.ValidateNewItemName, Icon!);
+    if (string.IsNullOrEmpty(newName)) return;
     
     _groupDataAdapter.ItemCreate(parent, newName);
   }
 
-  public override void GroupRename(ITreeGroup group) {
-    if (!GetNewName(false, group.Name, out var newName, group, _groupDataAdapter.ValidateNewItemName, Icon!)) return;
+  public override async Task  GroupRename(ITreeGroup group) {
+    var newName = await GetNewName(false, group.Name,group, _groupDataAdapter.ValidateNewItemName, Icon!);
+    if (string.IsNullOrEmpty(newName)) return;
 
     _groupDataAdapter.ItemRename(group, newName);
   }
@@ -200,8 +206,8 @@ public class TreeCategory<TI, TG>(TreeView treeView, string icon, string name, i
   public override void GroupMove(ITreeGroup group, ITreeGroup dest, bool aboveDest) =>
     _groupDataAdapter.ItemMove(group, dest, aboveDest);
 
-  public override void GroupDelete(ITreeGroup group) {
-    if (!_deleteAccepted(group.Name)) return;
+  public override async Task GroupDelete(ITreeGroup group) {
+    if (!await _deleteAccepted(group.Name)) return;
     
     _groupDataAdapter.ItemDelete(group);
   }
