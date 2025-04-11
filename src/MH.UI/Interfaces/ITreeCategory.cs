@@ -11,7 +11,7 @@ public interface ITreeCategory : ITreeItem {
   public Task ItemCreate(ITreeItem parent);
   public Task ItemRename(ITreeItem item);
   public Task ItemDelete(ITreeItem item);
-  public void ItemMoveToGroup(ITreeItem item);
+  public Task ItemMoveToGroup(ITreeItem item);
 
   public Task GroupCreate(ITreeItem parent);
   public Task GroupRename(ITreeGroup group);

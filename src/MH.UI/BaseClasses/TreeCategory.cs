@@ -27,8 +27,8 @@ public class TreeCategory : TreeItem, ITreeCategory {
   public static AsyncRelayCommand<ITreeItem> ItemDeleteCommand { get; } = new(
     (item, _) => _getCategory(item)?.ItemDelete(item!) ?? Task.CompletedTask, null, "Delete");
 
-  public static RelayCommand<ITreeItem> ItemMoveToGroupCommand { get; } = new(
-    item => _getCategory(item)?.ItemMoveToGroup(item!), null, "Move to group");
+  public static AsyncRelayCommand<ITreeItem> ItemMoveToGroupCommand { get; } = new(
+    (item, _) => _getCategory(item)?.ItemMoveToGroup(item!) ?? Task.CompletedTask, null, "Move to group");
 
   public static AsyncRelayCommand<ITreeCategory> GroupCreateCommand { get; } = new(
     (item, _) => _getCategory(item)?.GroupCreate(item!) ?? Task.CompletedTask, null, "New Group");
@@ -49,7 +49,7 @@ public class TreeCategory : TreeItem, ITreeCategory {
   public virtual Task ItemCreate(ITreeItem parent) => throw new NotImplementedException();
   public virtual Task ItemRename(ITreeItem item) => throw new NotImplementedException();
   public virtual Task ItemDelete(ITreeItem item) => throw new NotImplementedException();
-  public virtual void ItemMoveToGroup(ITreeItem item) => throw new NotImplementedException();
+  public virtual Task ItemMoveToGroup(ITreeItem item) => throw new NotImplementedException();
   public virtual Task GroupCreate(ITreeItem parent) => throw new NotImplementedException();
   public virtual Task GroupRename(ITreeGroup group) => throw new NotImplementedException();
   public virtual Task GroupDelete(ITreeGroup group) => throw new NotImplementedException();
@@ -151,10 +151,10 @@ public class TreeCategory<TI>(TreeView treeView, string icon, string name, int i
     }
   }
 
-  public override void ItemMoveToGroup(ITreeItem item) {
+  public override async Task ItemMoveToGroup(ITreeItem item) {
     var groups = Items.OfType<ITreeGroup>().Except([item.Parent!]).Cast<IListItem>().ToArray();
     var dlg = new SelectFromListDialog(groups, Res.IconGroup);
-    if (Dialog.Show(dlg) != 1 || dlg.SelectedItem is not ITreeItem group) return;
+    if (await Dialog.ShowAsync(dlg) != 1 || dlg.SelectedItem is not ITreeItem group) return;
     OnDrop(item, group, false, false);
   }
 
