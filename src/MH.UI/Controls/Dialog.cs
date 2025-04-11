@@ -14,13 +14,19 @@ public class Dialog(string title, string icon) : ObservableObject {
   public string Title { get => _title; set { _title = value; OnPropertyChanged(); } }
   public string Icon { get => _icon; set { _icon = value; OnPropertyChanged(); } }
   public DialogButton[] Buttons { get => _buttons; set { _buttons = value; OnPropertyChanged(); } }
+  public TaskCompletionSource<int> TaskCompletionSource { get; } = new();
   public static Func<Dialog, int> Show { get; set; } = _ => -1;
+  public static Func<Dialog, Task<int>> ShowAsync { get; set; } = _ => Task.FromResult(-1);
 
   public int Result {
     get => _result;
     set {
       _result = value;
-      _onResultChanged(value).ContinueWith(_ => Tasks.RunOnUiThread(() => OnPropertyChanged()));
+      _onResultChanged(value)
+        .ContinueWith(_ => {
+          TaskCompletionSource.SetResult(value);
+          return Tasks.RunOnUiThread(() => OnPropertyChanged());
+        });
     }
   }
 
