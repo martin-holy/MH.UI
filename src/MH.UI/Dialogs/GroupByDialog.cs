@@ -2,6 +2,7 @@
 using MH.Utils.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MH.UI.Dialogs;
 
@@ -22,7 +23,7 @@ public class GroupByDialog<T> : Dialog where T : class, ISelectable {
     ];
   }
 
-  public bool Open(CollectionViewGroup<T> group, IEnumerable<GroupByItem<T>> items) {
+  public async Task<bool> Open(CollectionViewGroup<T> group, IEnumerable<GroupByItem<T>> items) {
     IsRecursive = group.IsRecursive;
     IsGroupBy = group.IsGroupBy;
     IsThenBy = group.IsThenBy;
@@ -32,7 +33,7 @@ public class GroupByDialog<T> : Dialog where T : class, ISelectable {
     foreach (var item in items)
       TreeView.RootHolder.Add(item);
 
-    if (Show(this) != 1) return false;
+    if (await ShowAsync(this) != 1) return false;
 
     group.IsGroupingRoot = true;
 
