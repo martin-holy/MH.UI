@@ -8,6 +8,8 @@ using MH.Utils.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MH.UI.Controls;
 
@@ -90,7 +92,7 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
     }
   }
 
-  public RelayCommand<CollectionViewGroup<T>> OpenGroupByDialogCommand { get; }
+  public AsyncRelayCommand<CollectionViewGroup<T>> OpenGroupByDialogCommand { get; }
   public RelayCommand<CollectionViewGroup<T>> ShuffleCommand { get; }
   public RelayCommand<CollectionViewGroup<T>> SortCommand { get; }
 
@@ -297,8 +299,8 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
     ScrollTo(TopGroup, TopItem);
   }
 
-  private void _openGroupByDialog(CollectionViewGroup<T>? group) {
-    if (group != null && _groupByDialog.Open(group, GetGroupByItems(group.Source)))
+  private async Task _openGroupByDialog(CollectionViewGroup<T>? group, CancellationToken token) {
+    if (group != null && await _groupByDialog.Open(group, GetGroupByItems(group.Source)))
       _groupByItemsRoots.Add(group);
   }
 
