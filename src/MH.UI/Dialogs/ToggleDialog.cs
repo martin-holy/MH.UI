@@ -3,6 +3,7 @@ using MH.Utils.BaseClasses;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MH.UI.Dialogs;
 
@@ -30,7 +31,7 @@ public class ToggleDialog() : Dialog(string.Empty, string.Empty) {
   public string? Message { get; private set; }
   public ListItem? Item { get; private set; }
 
-  public void Toggle(ListItem? item) {
+  public async Task Toggle(ListItem? item) {
     if (item == null || SourceTypes.SingleOrDefault(x => x.Type == item.GetType()) is not { } st) return;
 
     var buttons = new List<DialogButton>();
@@ -46,7 +47,7 @@ public class ToggleDialog() : Dialog(string.Empty, string.Empty) {
     Item = item;
     Buttons = buttons.ToArray();
 
-    Show(this);
+    await ShowAsync(this);
 
     if (Result > 0) {
       var opt = st.Options[Result - 1];
