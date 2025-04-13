@@ -60,7 +60,7 @@ public class TreeCategory : TreeItem, ITreeCategory {
   public virtual bool CanDrop(object? src, ITreeItem? dest) =>
     _canDrop(src as ITreeItem, dest);
 
-  public virtual void OnDrop(object src, ITreeItem dest, bool aboveDest, bool copy) =>
+  public virtual Task OnDrop(object src, ITreeItem dest, bool aboveDest, bool copy) =>
     throw new NotImplementedException();
 
   private static bool _canDrop(ITreeItem? src, ITreeItem? dest) {
@@ -155,14 +155,14 @@ public class TreeCategory<TI>(TreeView treeView, string icon, string name, int i
     var groups = Items.OfType<ITreeGroup>().Except([item.Parent!]).Cast<IListItem>().ToArray();
     var dlg = new SelectFromListDialog(groups, Res.IconGroup);
     if (await Dialog.ShowAsync(dlg) != 1 || dlg.SelectedItem is not ITreeItem group) return;
-    OnDrop(item, group, false, false);
+    await OnDrop(item, group, false, false);
   }
 
-  public override void OnDrop(object src, ITreeItem dest, bool aboveDest, bool copy) {
+  public override Task OnDrop(object src, ITreeItem dest, bool aboveDest, bool copy) {
     // groups
     if (src is ITreeGroup srcGroup && dest is ITreeGroup destGroup) {
       GroupMove(srcGroup, destGroup, aboveDest);
-      return;
+      return Task.CompletedTask;
     }
 
     // items
@@ -174,6 +174,7 @@ public class TreeCategory<TI>(TreeView treeView, string icon, string name, int i
     }
 
     AfterDropEvent?.Invoke(this, new(src, dest, aboveDest, copy));
+    return Task.CompletedTask;
   }
 
   protected static async Task<bool> _deleteAccepted(string name) =>

@@ -19,5 +19,5 @@ public interface ITreeCategory : ITreeItem {
   public void GroupMove(ITreeGroup group, ITreeGroup dest, bool aboveDest);
 
   public bool CanDrop(object? src, ITreeItem? dest);
-  public void OnDrop(object src, ITreeItem dest, bool aboveDest, bool copy);
+  public Task OnDrop(object src, ITreeItem dest, bool aboveDest, bool copy);
 }
