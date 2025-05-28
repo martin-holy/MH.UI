@@ -17,6 +17,7 @@ public sealed class Core {
 
   public Task InitAsync(IProgress<string> progress) {
     return Task.Run(() => {
+      Drives.UpdateSerialNumbers();
       progress.Report("Loading ...");
     });
   }

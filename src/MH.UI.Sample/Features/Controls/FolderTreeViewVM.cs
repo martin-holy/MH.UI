@@ -1,6 +1,6 @@
 ﻿using MH.UI.Controls;
 using MH.UI.Sample.Resources;
-using System;
+using MH.Utils;
 using System.IO;
 
 namespace MH.UI.Sample.Features.Controls;
@@ -8,24 +8,23 @@ namespace MH.UI.Sample.Features.Controls;
 public class FolderTreeViewVM : TreeView {
   public FolderTreeViewVM() {
     ShowTreeItemSelection = true;
-    AddDrives();
+    _addDrives();
   }
 
-  private void AddDrives() {
-    var drives = Environment.GetLogicalDrives();
+  private void _addDrives() {
     RootHolder.Clear();
     SelectedTreeItems.DeselectAll();
 
-    foreach (var drive in drives) {
-      var di = new DriveInfo(drive);
+    foreach (var drive in Drives.SerialNumbers) {
+      var di = new DriveInfo(drive.Key);
       if (!di.IsReady) continue;
 
-      var item = new FolderM(null, di.Name.TrimEnd(Path.DirectorySeparatorChar)) {
+      var item = new FolderM(null, drive.Key) {
         Icon = GetDriveIcon(di.DriveType)
       };
 
       // add placeholder so the Drive can be expanded
-      item.Items.Add(new FolderM(null, string.Empty));
+      item.Items.Add(FolderM.FolderPlaceHolder);
 
       RootHolder.Add(item);
     }

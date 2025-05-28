@@ -8,6 +8,8 @@ using System.IO;
 namespace MH.UI.Sample.Features.Controls;
 
 public class FolderM : TreeItem {
+  public static readonly FolderM FolderPlaceHolder = new(null, string.Empty);
+
   public string FullPath => this.GetFullName(Path.DirectorySeparatorChar.ToString(), x => x.Name);
 
   public FolderM(ITreeItem? parent, string name) : base(Icons.Folder, name) {
@@ -37,7 +39,7 @@ public class FolderM : TreeItem {
         // add placeholder so the folder can be expanded
         using var enumerator = Directory.EnumerateDirectories(folder.FullPath).GetEnumerator();
         if (enumerator.MoveNext())
-          folder.Items.Add(new FolderM(null, string.Empty));
+          folder.Items.Add(FolderPlaceHolder);
 
         // add new Folder to the tree if is Accessible
         Items.Add(folder);
