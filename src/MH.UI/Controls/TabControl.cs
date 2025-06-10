@@ -3,6 +3,7 @@ using MH.Utils.Interfaces;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Xml.Linq;
 
 namespace MH.UI.Controls;
 
@@ -29,6 +30,13 @@ public class TabControl : ObservableObject {
 
   protected void _raiseTabActivated(IListItem tab) => TabActivatedEvent?.Invoke(this, tab);
   protected void _raiseTabClosed(IListItem tab) => TabClosedEvent?.Invoke(this, tab);
+
+  public void Activate(object data) {
+    var tab = Tabs.SingleOrDefault(x => ReferenceEquals(data, x.Data));
+    if (tab != null) Selected = tab;
+
+    _raiseTabActivated(Selected!);
+  }
 
   public void Activate(string icon, string name, object data) {
     var tab = Tabs.SingleOrDefault(x => ReferenceEquals(data, x.Data));
