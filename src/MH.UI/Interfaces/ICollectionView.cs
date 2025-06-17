@@ -1,4 +1,5 @@
 ﻿using MH.UI.Controls;
+using MH.Utils.Interfaces;
 using System;
 
 namespace MH.UI.Interfaces; 
@@ -10,7 +11,9 @@ public interface ICollectionViewGroup {
   public void SetViewMode(CollectionView.ViewMode viewMode);
 }
 
-public interface ICollectionViewRow;
+public interface ICollectionViewRow : ITreeItem {
+  System.Collections.IEnumerable Leaves { get; }
+}
 
 public interface ICollectionViewFilter<in T> {
   public bool Filter(T item);
