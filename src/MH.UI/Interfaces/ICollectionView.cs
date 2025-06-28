@@ -5,6 +5,7 @@ using System;
 namespace MH.UI.Interfaces; 
 
 public interface ICollectionViewGroup : ITreeItem {
+  public CollectionView.ViewMode ViewMode { get; set; }
   public double Width { get; set; }
   public int GetItemSize(object item, bool getWidth);
   public string GetItemTemplateName();
