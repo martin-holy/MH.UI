@@ -11,6 +11,7 @@ public sealed class TabStrip(Dock placement, Dock slotPlacement, object slot) : 
   private double _maxTabWidth;
   private double _maxTabHeight;
   private double _size;
+  private IconTextVisibility _iconTextVisibility = IconTextVisibility.Both;
 
   public Dock Placement { get => _placement; set { _placement = value; OnPropertyChanged(); } }
   public Dock SlotPlacement { get => _slotPlacement; set { _slotPlacement = value; OnPropertyChanged(); } }
@@ -20,6 +21,7 @@ public sealed class TabStrip(Dock placement, Dock slotPlacement, object slot) : 
   public double MaxTabWidth { get => _maxTabWidth; set { _maxTabWidth = value; OnPropertyChanged(); } }
   public double MaxTabHeight { get => _maxTabHeight; set { _maxTabHeight = value; OnPropertyChanged(); } }
   public double Size { get => _size; set { _size = value; OnPropertyChanged(); } }
+  public IconTextVisibility IconTextVisibility { get => _iconTextVisibility; set { _iconTextVisibility = value; OnPropertyChanged(); }}
 
   public void UpdateMaxTabSize(int tabsCount) {
     if (tabsCount == 0 || !_justifyTabSize) {
