@@ -203,6 +203,14 @@ public class ZoomAndPan : ObservableObject {
     _setScale(scale, e.contentPos.X, e.contentPos.Y);
   }
 
+  public void Zoom(double delta, PointD contentPos) {
+    if ((delta < 0 && (_scaleX < .2 || _scaleY < .2))) return;
+
+    _isZoomed = true;
+    var scale = _scaleX + delta;
+    _setScale(scale, contentPos.X, contentPos.Y);
+  }
+
   public bool IsContentPanoramic() =>
     Host != null && ContentWidth / (ContentHeight / Host.Height) > Host.Width;
 }
