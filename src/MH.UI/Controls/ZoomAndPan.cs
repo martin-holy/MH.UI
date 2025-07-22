@@ -47,6 +47,7 @@ public class ZoomAndPan : ObservableObject {
   public bool IsAnimationOn { get => _isAnimationOn; set { _isAnimationOn = value; OnPropertyChanged(); } }
   public bool ExpandToFill { get => _expandToFill; set { _expandToFill = value; OnPropertyChanged(); } }
   public bool ShrinkToFill { get => _shrinkToFill; set { _shrinkToFill = value; OnPropertyChanged(); } }
+  public bool IsZoomed { get => _isZoomed; }
   public double ActualZoom => _scaleX * 100;
 
   public event EventHandler? AnimationEndedEvent;
@@ -203,12 +204,12 @@ public class ZoomAndPan : ObservableObject {
     _setScale(scale, e.contentPos.X, e.contentPos.Y);
   }
 
-  public void Zoom(double delta, PointD contentPos) {
-    if ((delta < 0 && (_scaleX < .2 || _scaleY < .2))) return;
-
+  public void Zoom(double scale, PointD pos) {
+    if (scale < .1) return;
     _isZoomed = true;
-    var scale = _scaleX + delta;
-    _setScale(scale, contentPos.X, contentPos.Y);
+    var x = (pos.X - _transformX) / _scaleX;
+    var y = (pos.Y - _transformY) / _scaleY;
+    _setScale(scale, x, y);
   }
 
   public bool IsContentPanoramic() =>
