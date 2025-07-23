@@ -23,8 +23,7 @@ public class ZoomAndPan : ObservableObject {
   private double _startX;
   private double _startY;
   private double _originX;
-  private double _originY;
-  private bool _isZoomed;
+  private double _originY;  
 
   private double _scaleX;
   private double _scaleY;
@@ -35,6 +34,7 @@ public class ZoomAndPan : ObservableObject {
   private bool _isAnimationOn;
   private bool _expandToFill;
   private bool _shrinkToFill = true;
+  private bool _isZoomed;
   private IZoomAndPanHost? _host;
 
   public IZoomAndPanHost? Host { get => _host; set => _setHost(value); }
@@ -47,7 +47,7 @@ public class ZoomAndPan : ObservableObject {
   public bool IsAnimationOn { get => _isAnimationOn; set { _isAnimationOn = value; OnPropertyChanged(); } }
   public bool ExpandToFill { get => _expandToFill; set { _expandToFill = value; OnPropertyChanged(); } }
   public bool ShrinkToFill { get => _shrinkToFill; set { _shrinkToFill = value; OnPropertyChanged(); } }
-  public bool IsZoomed { get => _isZoomed; }
+  public bool IsZoomed { get => _isZoomed; set { _isZoomed = value; OnPropertyChanged(); } }
   public double ActualZoom => _scaleX * 100;
 
   public event EventHandler? AnimationEndedEvent;
@@ -94,7 +94,7 @@ public class ZoomAndPan : ObservableObject {
     ScaleY = scale;
     TransformX = (Host.Width - (_contentWidth * scale)) / 2;
     TransformY = (Host.Height - (_contentHeight * scale)) / 2;
-    _isZoomed = false;
+    IsZoomed = false;
     OnPropertyChanged(nameof(ActualZoom));
   }
 
@@ -199,14 +199,14 @@ public class ZoomAndPan : ObservableObject {
   private void _onHostMouseWheel(object? o, (int delta, PointD contentPos) e) {
     if (!Keyboard.IsCtrlOn() || (!(e.delta > 0) && (_scaleX < .2 || _scaleY < .2))) return;
 
-    _isZoomed = true;
+    IsZoomed = true;
     var scale = _scaleX + (e.delta > 0 ? .1 : -.1);
     _setScale(scale, e.contentPos.X, e.contentPos.Y);
   }
 
   public void Zoom(double scale, PointD pos) {
     if (scale < .1) return;
-    _isZoomed = true;
+    IsZoomed = true;
     var x = (pos.X - _transformX) / _scaleX;
     var y = (pos.Y - _transformY) / _scaleY;
     _setScale(scale, x, y);
