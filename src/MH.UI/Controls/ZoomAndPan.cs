@@ -182,7 +182,7 @@ public class ZoomAndPan : ObservableObject {
   private void _onHostMouseDown(object? o, (PointD host, PointD content) pos) {
     _raiseContentMouseDown();
 
-    if (!_isZoomed)
+    if (!_isZoomed && System.OperatingSystem.IsWindows())
       _setScale(1, pos.content.X, pos.content.Y);
 
     _startX = pos.host.X;
