@@ -318,10 +318,11 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
   private IEnumerable<IList<T>> _wrapSource() {
     var index = 0;
     var usedSpace = 0;
+    var borderSize = System.OperatingSystem.IsAndroid() ? 6 : 0; // TODO test it on Windows as well
 
     for (var i = 0; i < Source.Count; i++) {
       var item = Source[i];
-      var itemWidth = GetItemSize(item, true);
+      var itemWidth = GetItemSize(item, true) + borderSize;
 
       if (_width - usedSpace < itemWidth) {
         yield return Source.GetRange(index, i - index);
