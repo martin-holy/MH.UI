@@ -31,6 +31,7 @@ public abstract class CollectionView : TreeView {
   public string Icon { get; set; }
   public string Name { get; set; }
   public bool HasMoreThanOneViewMode => ViewModesCommands.Length > 1;
+  public static int ItemBorderSize { get; set; } = 0;
 
   public RelayCommand<ICollectionViewGroup>[] ViewModesCommands { get; }
 
