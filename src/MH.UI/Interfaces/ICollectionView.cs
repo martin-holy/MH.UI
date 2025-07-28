@@ -13,7 +13,7 @@ public interface ICollectionViewGroup : ITreeItem {
 }
 
 public interface ICollectionViewRow : ITreeItem {
-  System.Collections.IEnumerable Leaves { get; }
+  System.Collections.Generic.IEnumerable<ISelectable> Leaves { get; }
 }
 
 public interface ICollectionViewFilter<in T> {
