@@ -52,6 +52,7 @@ public abstract class CollectionView : TreeView {
   public virtual void OpenItem(object? item) { }
   public virtual void SelectItem(object row, object item, bool isCtrlOn, bool isShiftOn) { }
   public virtual void SetExpanded(object group) { }
+  public virtual IEnumerable<MenuItem> GetMenu(object item) => [];
 
   private static readonly Dictionary<ViewMode, string> _viewModeTextMap = new() {
     { ViewMode.Content, "Content" },
@@ -414,4 +415,18 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
 
   public IReadOnlyCollection<T> GetUnfilteredItems() =>
     _unfilteredSource ?? Root.Source;
+
+  public override IEnumerable<MenuItem> GetMenu(object item) {
+    var items = new List<MenuItem>() {
+      new(OpenGroupByDialogCommand, item),
+      new(ShuffleCommand, item),
+      new(SortCommand, item)
+    };
+
+    if (ViewModesCommands.Length > 1)
+      foreach (var vmc in ViewModesCommands)
+        items.Add(new(vmc, item));
+
+    return items;
+  }
 }
