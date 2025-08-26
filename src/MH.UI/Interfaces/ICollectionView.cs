@@ -7,6 +7,9 @@ namespace MH.UI.Interfaces;
 public interface ICollectionViewGroup : ITreeItem {
   public CollectionView.ViewMode ViewMode { get; set; }
   public double Width { get; set; }
+  public bool IsRecursive { get; set; }
+  public bool IsGroupBy { get; set; }
+  public bool IsThenBy { get; set; }
   public int GetItemSize(object item, bool getWidth);
   public string GetItemTemplateName();
   public void SetViewMode(CollectionView.ViewMode viewMode);

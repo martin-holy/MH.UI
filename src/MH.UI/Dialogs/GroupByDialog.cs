@@ -1,4 +1,5 @@
 ﻿using MH.UI.Controls;
+using MH.UI.Interfaces;
 using MH.Utils.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MH.UI.Dialogs;
 
-public class GroupByDialog<T> : Dialog where T : class, ISelectable {
+public class GroupByDialog : Dialog {
   private bool _isRecursive;
   private bool _isGroupBy = true;
   private bool _isThenBy;
@@ -23,7 +24,7 @@ public class GroupByDialog<T> : Dialog where T : class, ISelectable {
     ];
   }
 
-  public async Task<bool> Open(CollectionViewGroup<T> group, IEnumerable<GroupByItem<T>> items) {
+  public async Task<ICollection<ITreeItem>?> Open(ICollectionViewGroup group, IEnumerable<ITreeItem> items) {
     IsRecursive = group.IsRecursive;
     IsGroupBy = group.IsGroupBy;
     IsThenBy = group.IsThenBy;
@@ -33,25 +34,14 @@ public class GroupByDialog<T> : Dialog where T : class, ISelectable {
     foreach (var item in items)
       TreeView.RootHolder.Add(item);
 
-    if (await ShowAsync(this) != 1) return false;
+    if (await ShowAsync(this) != 1) return null;
 
-    group.IsGroupingRoot = true;
-
-    if (TreeView.SelectedTreeItems.Items.Count == 0) {
-      group.GroupByItems = null;
-      group.Items.Clear();
-      group.ReWrap();
-      return true;
+    if (TreeView.SelectedTreeItems.Items.Count > 0) {
+      group.IsRecursive = IsRecursive;
+      group.IsGroupBy = IsGroupBy;
+      group.IsThenBy = IsThenBy;
     }
 
-    group.IsRecursive = IsRecursive;
-    group.IsGroupBy = IsGroupBy;
-    group.IsThenBy = IsThenBy;
-    group.GroupByItems = TreeView.SelectedTreeItems.Items.Cast<GroupByItem<T>>().ToArray();
-    group.GroupIt();
-    group.View.RemoveEmptyGroups(group, null);
-    group.IsExpanded = true;
-
-    return true;
+    return TreeView.SelectedTreeItems.Items;
   }
 }

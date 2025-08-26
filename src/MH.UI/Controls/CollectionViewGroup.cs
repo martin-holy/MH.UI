@@ -408,4 +408,20 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
     else
       Sort();
   }
+
+  public void ReGroup(ICollection<ITreeItem> groupByItems) {
+    IsGroupingRoot = true;
+
+    if (groupByItems.Count == 0) {
+      GroupByItems = null;
+      Items.Clear();
+      ReWrap();
+    }
+    else {
+      GroupByItems = groupByItems.Cast<GroupByItem<T>>().ToArray();
+      GroupIt();
+      View.RemoveEmptyGroups(this, null);
+      IsExpanded = true;
+    }
+  }
 }

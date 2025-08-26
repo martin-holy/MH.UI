@@ -67,7 +67,7 @@ public abstract class CollectionView : TreeView {
 
 public abstract class CollectionView<T> : CollectionView where T : class, ISelectable {
   private readonly HashSet<CollectionViewGroup<T>> _groupByItemsRoots = [];
-  private readonly GroupByDialog<T> _groupByDialog = new();
+  private readonly GroupByDialog _groupByDialog = new();
   private readonly HashSet<T> _pendingRemove = [];
   private readonly HashSet<T> _pendingUpdate = [];
   private List<T>? _unfilteredSource;
@@ -214,7 +214,7 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
 
     if (ifContains) items = Root.Source.Intersect(items).ToArray();
     if (items.Length == 0) return;
-    
+
     if (!IsVisible && !remove) {
       items.ForEach(x => _pendingUpdate.Add(x));
       return;
@@ -222,7 +222,7 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
 
     if (!_filterIsChanging)
       _updateUnfilteredSource(items, remove);
-    
+
     var toReWrap = new HashSet<CollectionViewGroup<T>>();
 
     if (remove) {
@@ -294,7 +294,7 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
 
   public override void SetExpanded(object group) {
     if (group is not CollectionViewGroup<T> g) return;
-      
+
     _updateRoot(Root, _ => g.SetExpanded<CollectionViewGroup<T>>(g.IsExpanded));
     TopItem = default;
     TopGroup = g;
@@ -302,8 +302,10 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
   }
 
   private async Task _openGroupByDialog(CollectionViewGroup<T>? group, CancellationToken token) {
-    if (group != null && await _groupByDialog.Open(group, GetGroupByItems(group.Source)))
+    if (group != null && await _groupByDialog.Open(group, GetGroupByItems(group.Source)) is { } selectedItems) {
+      group.ReGroup(selectedItems);
       _groupByItemsRoots.Add(group);
+    }
   }
 
   private void _clearLastSelected() {
