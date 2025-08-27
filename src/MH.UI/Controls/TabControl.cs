@@ -16,6 +16,7 @@ public class TabControl : ObservableObject {
   public IListItem? Selected { get => _selected; set => _setSelected(value); }
   public bool CanCloseTabs { get => _canCloseTabs; set { _canCloseTabs = value; OnPropertyChanged(); OnPropertyChanged(nameof(Selected.Data)); } }
 
+  public RelayCommand<IListItem> SelectTabCommand { get; }
   public RelayCommand<IListItem> CloseTabCommand { get; }
 
   public event EventHandler<IListItem>? TabActivatedEvent;
@@ -23,6 +24,7 @@ public class TabControl : ObservableObject {
 
   public TabControl(TabStrip tabStrip) {
     TabStrip = tabStrip;
+    SelectTabCommand = new(_setSelected);
     CloseTabCommand = new(Close, Res.IconXCross, "Close");
 
     Tabs.CollectionChanged += (_, _) => TabStrip.UpdateMaxTabSize(Tabs.Count);
