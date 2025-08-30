@@ -10,6 +10,7 @@ public interface ICollectionViewGroup : ITreeItem {
   public bool IsRecursive { get; set; }
   public bool IsGroupBy { get; set; }
   public bool IsThenBy { get; set; }
+  public int SourceCount { get; }
   public int GetItemSize(object item, bool getWidth);
   public string GetItemTemplateName();
   public void SetViewMode(CollectionView.ViewMode viewMode);
