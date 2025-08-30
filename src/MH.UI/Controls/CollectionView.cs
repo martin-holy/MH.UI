@@ -305,6 +305,10 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
     if (group != null && await _groupByDialog.Open(group, GetGroupByItems(group.Source)) is { } selectedItems) {
       group.ReGroup(selectedItems);
       _groupByItemsRoots.Add(group);
+
+      // groups created by ReGroup re-wraps thers items when are rendered in WPF
+      // but for android I re-wrap all here because the widths of groups are known
+      if (System.OperatingSystem.IsAndroid()) ReWrapAll();
     }
   }
 
