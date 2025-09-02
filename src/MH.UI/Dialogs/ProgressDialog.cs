@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace MH.UI.Dialogs;
 
 public class ProgressDialog<T> : Dialog {
-  private readonly T[] _items;
+  protected readonly T[] _items;
   private readonly bool _autoClose;
   private int _progressMax;
   private int _progressValue;
