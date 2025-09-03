@@ -29,6 +29,7 @@ public class TreeView : ObservableObject {
   public ITreeItem[] TopTreeItemPath => _topTreeItem == null ? [] : _topTreeItem.GetThisAndParents().Skip(1).Reverse().Skip(1).ToArray();
   // TODO rename and combine with single and multi select
   public bool ShowTreeItemSelection { get; set; }
+  public bool MultiSelect { get; set; }
 
   public RelayCommand<ITreeItem> ScrollToItemCommand { get; }
   public RelayCommand ScrollToTopCommand { get; }
@@ -58,7 +59,7 @@ public class TreeView : ObservableObject {
     await _onItemSelected(item, token);
 
     if (ShowTreeItemSelection)
-      SelectedTreeItems.Select(item.Parent?.Items.ToList(), item, Keyboard.IsCtrlOn(), Keyboard.IsShiftOn());
+      SelectedTreeItems.Select(item.Parent?.Items.ToList(), item, Keyboard.IsCtrlOn() || MultiSelect, Keyboard.IsShiftOn());
   }
 
   protected virtual void _onTopTreeItemChanged() =>
