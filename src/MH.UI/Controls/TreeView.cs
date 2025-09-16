@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 namespace MH.UI.Controls;
 
 public interface ITreeViewHost {
+  public double Width { get; }
   public void ExpandRootWhenReady(ITreeItem root);
   public void ScrollToTop();
   public void ScrollToItems(object[] items, bool exactly);
