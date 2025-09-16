@@ -152,7 +152,8 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
       IsGroupBy = groupMode is GroupMode.GroupBy or GroupMode.GroupByRecursive,
       IsThenBy = groupMode is GroupMode.ThenBy or GroupMode.ThenByRecursive,
       IsRecursive = groupMode is GroupMode.GroupByRecursive or GroupMode.ThenByRecursive,
-      GroupByItems = groupByItems?.Length == 0 ? null : groupByItems
+      GroupByItems = groupByItems?.Length == 0 ? null : groupByItems,
+      Width = Host?.Width ?? 0
     };
 
     TopGroup = null;
