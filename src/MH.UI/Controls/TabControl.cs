@@ -70,11 +70,10 @@ public class TabControl : ObservableObject {
   public void Close(IListItem? tab) {
     if (tab == null || !CanCloseTabs) return;
 
-    Tabs.Remove(tab);
-
     if (ReferenceEquals(Selected, tab))
-      Selected = Tabs.FirstOrDefault();
+      Selected = Tabs.FirstOrDefault(x => !ReferenceEquals(x, tab));
 
+    Tabs.Remove(tab);
     _raiseTabClosed(tab);
   }
 
