@@ -25,7 +25,10 @@ public abstract class UserSettings {
 
   protected void _watchForChanges() {
     foreach (var item in Groups.Select(x => x.Data).OfType<ObservableObject>())
-      item.PropertyChanged += delegate { Modified = true; };
+      item.PropertyChanged += delegate {
+        Modified = true;
+        SaveCommand.RaiseCanExecuteChanged();
+      };
   }
 
   public static T? DeserializeGroup<T>(JsonElement root, string name) =>
