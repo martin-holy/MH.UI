@@ -12,7 +12,7 @@ public abstract class UserSettings {
   private readonly string _filePath;
 
   [JsonIgnore]
-  public bool Modified { get; set; }
+  public bool Modified { get; private set; }
   [JsonIgnore]
   public ListItem[] Groups { get; protected set; } = null!;
   [JsonIgnore]
@@ -25,10 +25,7 @@ public abstract class UserSettings {
 
   protected void _watchForChanges() {
     foreach (var item in Groups.Select(x => x.Data).OfType<ObservableObject>())
-      item.PropertyChanged += delegate {
-        Modified = true;
-        SaveCommand.RaiseCanExecuteChanged();
-      };
+      item.PropertyChanged += delegate { SetModified(true); };
   }
 
   public static T? DeserializeGroup<T>(JsonElement root, string name) =>
@@ -40,7 +37,7 @@ public abstract class UserSettings {
     try {
       var opt = new JsonSerializerOptions { WriteIndented = true };
       File.WriteAllText(_filePath, Serialize(opt));
-      Modified = false;
+      SetModified(false);
     }
     catch (Exception ex) {
       Log.Error(ex);
@@ -48,4 +45,9 @@ public abstract class UserSettings {
   }
 
   protected abstract string Serialize(JsonSerializerOptions options);
+
+  public void SetModified(bool value) {
+    Modified = value;
+    SaveCommand.RaiseCanExecuteChanged();
+  }
 }
