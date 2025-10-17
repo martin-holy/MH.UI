@@ -28,15 +28,9 @@ public abstract class UserSettings {
       item.PropertyChanged += delegate { SetModified(true); };
   }
 
-  public static T? DeserializeGroup<T>(JsonElement root, string name) =>
-    root.TryGetProperty(name, out var elm)
-      ? JsonSerializer.Deserialize<T>(elm.GetRawText())
-      : default;
-
   public void Save() {
     try {
-      var opt = new JsonSerializerOptions { WriteIndented = true };
-      File.WriteAllText(_filePath, Serialize(opt));
+      File.WriteAllText(_filePath, Serialize());
       SetModified(false);
     }
     catch (Exception ex) {
@@ -44,7 +38,7 @@ public abstract class UserSettings {
     }
   }
 
-  protected abstract string Serialize(JsonSerializerOptions options);
+  protected abstract string Serialize();
 
   public void SetModified(bool value) {
     Modified = value;
