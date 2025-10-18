@@ -78,6 +78,9 @@ public class ZoomAndPan : ObservableObject {
   } 
 
   private void _setScale(double scale, double relativeX, double relativeY) {
+    var minScale = _getMinScale();
+    if (scale < minScale) scale = minScale;
+
     var absoluteX = (relativeX * _scaleX) + _transformX;
     var absoluteY = (relativeY * _scaleY) + _transformY;
     ScaleX = scale;
@@ -86,6 +89,9 @@ public class ZoomAndPan : ObservableObject {
     TransformY = absoluteY - (relativeY * _scaleY);
     OnPropertyChanged(nameof(ActualZoom));
   }
+
+  private double _getMinScale() =>
+    Host == null ? 1.0 : _getFitScale(Host.Width, Host.Height);
 
   public void ScaleToFit() {
     if (Host == null) return;
