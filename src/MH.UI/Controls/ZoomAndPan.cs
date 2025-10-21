@@ -185,6 +185,34 @@ public class ZoomAndPan : ObservableObject {
   private void _onHostMouseMove(object? o, PointD hostPos) {
     TransformX = _originX - (_startX - hostPos.X);
     TransformY = _originY - (_startY - hostPos.Y);
+    _applyPanLimits();
+  }
+
+  private void _applyPanLimits() {
+    if (Host == null) return;
+
+    var visibleW = _contentWidth * _scaleX;
+    var visibleH = _contentHeight * _scaleY;
+
+    if (visibleW > Host.Width) {
+      var minX = Host.Width - visibleW;
+      var maxX = 0.0;
+      if (TransformX < minX) TransformX = minX;
+      if (TransformX > maxX) TransformX = maxX;
+    }
+    else {
+      TransformX = (Host.Width - visibleW) / 2;
+    }
+
+    if (visibleH > Host.Height) {
+      var minY = Host.Height - visibleH;
+      var maxY = 0.0;
+      if (TransformY < minY) TransformY = minY;
+      if (TransformY > maxY) TransformY = maxY;
+    }
+    else {
+      TransformY = (Host.Height - visibleH) / 2;
+    }
   }
 
   private void _onHostMouseDown(object? o, (PointD host, PointD content) pos) {
