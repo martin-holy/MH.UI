@@ -4,6 +4,7 @@ using MH.Utils.BaseClasses;
 using MH.Utils.Extensions;
 using MH.Utils.Interfaces;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -407,6 +408,18 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
       DoForAll(this, x => x.Sort());
     else
       Sort();
+  }
+
+  public void SortBy(CollectionView.SortMode mode) {
+    Source.Sort((a, b) => View.SortByCompare(a, b, mode));
+    ReWrap();
+  }
+
+  public void SortBy(CollectionView.SortMode mode, bool recursive) {
+    if (recursive)
+      DoForAll(this, x => x.SortBy(mode));
+    else
+      SortBy(mode);
   }
 
   public void ReGroup(ICollection<ITreeItem> groupByItems) {

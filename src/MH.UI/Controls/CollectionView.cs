@@ -18,8 +18,10 @@ public interface ICollectionViewHost : ITreeViewHost;
 public abstract class CollectionView : TreeView {
   private ICollectionViewHost? _host;
 
+  public enum SortMode { DefaultAsc, DefaultDesc }
   public enum ViewMode { Content, Details, List, ThumbBig, ThumbMedium, ThumbSmall, Tiles }
 
+  protected SortMode[] SortModes { get; }
   protected ViewMode[] ViewModes { get; }
 
   public new ICollectionViewHost? Host { get => _host; set => _setHost(ref _host, value); }
@@ -33,14 +35,21 @@ public abstract class CollectionView : TreeView {
   public bool HasMoreThanOneViewMode => ViewModesCommands.Length > 1;
   public static int ItemBorderSize { get; set; } = 0;
 
+  public RelayCommand<ICollectionViewGroup>[] SortModesCommands { get; }
   public RelayCommand<ICollectionViewGroup>[] ViewModesCommands { get; }
 
-  protected CollectionView(string icon, string name, ViewMode[] viewModes) {
+  protected CollectionView(string icon, string name, ViewMode[] viewModes, SortMode[]? sortModes) {
     Icon = icon;
     Name = name;
 
     if (viewModes.Length == 0)
       throw new ArgumentException("At least one ViewMode must be specified");
+
+    SortModes = sortModes ?? [SortMode.DefaultAsc, SortMode.DefaultDesc];
+    SortModesCommands = SortModes
+      .Select(mode => new RelayCommand<ICollectionViewGroup>(g => _sortBy(g!, mode), g => g != null, null, _sortModeTextMap[mode]))
+      .OrderBy(x => x.Text)
+      .ToArray();
 
     ViewModes = viewModes;
     ViewModesCommands = viewModes
@@ -54,6 +63,11 @@ public abstract class CollectionView : TreeView {
   public virtual void SetExpanded(object group) { }
   public virtual IEnumerable<MenuItem> GetMenu(object item) => [];
 
+  private static readonly Dictionary<SortMode, string> _sortModeTextMap = new() {
+    { SortMode.DefaultAsc, "Default Asc" },
+    { SortMode.DefaultDesc, "Default Desc" }
+  };
+
   private static readonly Dictionary<ViewMode, string> _viewModeTextMap = new() {
     { ViewMode.Content, "Content" },
     { ViewMode.Details, "Details" },
@@ -63,6 +77,13 @@ public abstract class CollectionView : TreeView {
     { ViewMode.ThumbSmall, "Thumb small" },
     { ViewMode.Tiles, "Tiles" }
   };
+
+  internal abstract void _clearLastSelected();
+
+  private void _sortBy(ICollectionViewGroup group, SortMode mode) {
+    group.SortBy(mode, Keyboard.IsShiftOn());
+    _clearLastSelected();
+  }
 }
 
 public abstract class CollectionView<T> : CollectionView where T : class, ISelectable {
@@ -102,7 +123,7 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
   public new event EventHandler<SelectionEventArgs<T>>? ItemSelectedEvent;
   public event EventHandler? FilterAppliedEvent;
 
-  protected CollectionView(string icon, string name, ViewMode[] viewModes) : base(icon, name, viewModes) {
+  protected CollectionView(string icon, string name, ViewMode[] viewModes, SortMode[]? sortModes = null) : base(icon, name, viewModes, sortModes) {
     Root = new(this, [], null);
     OpenGroupByDialogCommand = new(_openGroupByDialog, Res.IconGroup, "Group by");
     ShuffleCommand = new(_shuffle, Res.IconRandom, "Shuffle");
@@ -119,6 +140,12 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
   protected virtual void _onItemOpened(T item) { }
   protected virtual void _onItemSelected(SelectionEventArgs<T> args) { }
   public virtual string GetItemTemplateName(ViewMode viewMode) => string.Empty;
+
+  public virtual int SortByCompare(T itemA, T itemB, SortMode mode) {
+    if (mode == SortMode.DefaultAsc) return SortCompare(itemA, itemB);
+    if (mode == SortMode.DefaultDesc) return -SortCompare(itemA, itemB);
+    return 0;
+  }
 
   public override bool IsHitTestItem(ITreeItem item) =>
     item is CollectionViewRow<T> or CollectionViewGroup<T>;
@@ -313,7 +340,7 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
     }
   }
 
-  private void _clearLastSelected() {
+  internal override void _clearLastSelected() {
     LastSelectedRow = null;
     LastSelectedItem = null;
     OnPropertyChanged(nameof(PositionSlashCount));
@@ -426,9 +453,10 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
   public override IEnumerable<MenuItem> GetMenu(object item) {
     var items = new List<MenuItem>() {
       new(OpenGroupByDialogCommand, item),
-      new(ShuffleCommand, item),
-      new(SortCommand, item)
+      new(ShuffleCommand, item)
     };
+
+    items.Add(new MenuItem(Res.IconSort, "Sort by", SortModesCommands.Select(cmd => new MenuItem(cmd, item))));
 
     if (ViewModesCommands.Length > 1)
       foreach (var vmc in ViewModesCommands)
