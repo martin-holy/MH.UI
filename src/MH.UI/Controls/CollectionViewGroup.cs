@@ -36,6 +36,8 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
   public bool IsReWrapPending { get; set; } = true;
   public new string Icon => (GroupedBy?.Data as IListItem)?.Icon ?? Res.IconDashSquareDotted;
   public new string Name => (GroupedBy?.Data as IListItem)?.Name ?? string.Empty;
+  protected CollectionView.SortField<T>? CurrentSortField;
+  protected CollectionView.SortMode CurrentSortMode = CollectionView.SortMode.Ascending;
 
   public CollectionViewGroup(CollectionView<T> view, List<T> source, GroupByItem<T>? groupedBy) {
     View = view;
@@ -410,16 +412,35 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
       Sort();
   }
 
-  public void SortBy(CollectionView.SortMode mode) {
-    Source.Sort((a, b) => View.SortByCompare(a, b, mode));
-    ReWrap();
+  public void SortBy(CollectionView.SortField<T> field, bool recursive) {
+    if (CurrentSortField == field)
+      CurrentSortMode = CurrentSortMode == CollectionView.SortMode.Ascending
+        ? CollectionView.SortMode.Descending
+        : CollectionView.SortMode.Ascending;
+    else {
+      CurrentSortField = field;
+      CurrentSortMode = CollectionView.SortMode.Ascending;
+    }
+
+    if (recursive)
+      DoForAll(this, x => x._applySort());
+    else
+      _applySort();
   }
 
-  public void SortBy(CollectionView.SortMode mode, bool recursive) {
-    if (recursive)
-      DoForAll(this, x => x.SortBy(mode));
-    else
-      SortBy(mode);
+  private void _applySort() {
+    if (CurrentSortField == null) return;
+
+    var cmp = CurrentSortField.Comparer;
+
+    Source.Sort((a, b) => {
+      var va = CurrentSortField.Selector(a);
+      var vb = CurrentSortField.Selector(b);
+      int result = cmp != null ? cmp.Compare(va, vb) : va.CompareTo(vb);
+      return CurrentSortMode == CollectionView.SortMode.Descending ? -result : result;
+    });
+
+    ReWrap();
   }
 
   public void ReGroup(ICollection<ITreeItem> groupByItems) {

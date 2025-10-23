@@ -13,7 +13,6 @@ public interface ICollectionViewGroup : ITreeItem {
   public int SourceCount { get; }
   public int GetItemSize(object item, bool getWidth);
   public string GetItemTemplateName();
-  public void SortBy(CollectionView.SortMode mode, bool recursive);
   public void SetViewMode(CollectionView.ViewMode viewMode);
 }
 
