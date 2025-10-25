@@ -34,10 +34,7 @@ public abstract class CollectionView : TreeView {
   public int GroupContentOffset { get; set; } = 0;
   public string Icon { get; set; }
   public string Name { get; set; }
-  public bool HasMoreThanOneViewMode => ViewModesCommands.Length > 1;
   public static int ItemBorderSize { get; set; } = 0;
-
-  public RelayCommand<ICollectionViewGroup>[] ViewModesCommands { get; }
 
   protected CollectionView(string icon, string name, ViewMode[] viewModes) {
     Icon = icon;
@@ -47,10 +44,6 @@ public abstract class CollectionView : TreeView {
       throw new ArgumentException("At least one ViewMode must be specified");
 
     ViewModes = viewModes;
-    ViewModesCommands = viewModes
-      .Select(vm => new RelayCommand<ICollectionViewGroup>(g => g?.SetViewMode(vm), null, _viewModeTextMap[vm]))
-      .OrderBy(x => x.Text)
-      .ToArray();
   }
 
   public virtual void OpenItem(object? item) { }
@@ -58,7 +51,7 @@ public abstract class CollectionView : TreeView {
   public virtual void SetExpanded(object group) { }
   public virtual IEnumerable<MenuItem> GetMenu(object item) => [];
 
-  private static readonly Dictionary<ViewMode, string> _viewModeTextMap = new() {
+  protected static readonly Dictionary<ViewMode, string> _viewModeTextMap = new() {
     { ViewMode.Content, "Content" },
     { ViewMode.Details, "Details" },
     { ViewMode.List, "List" },
@@ -430,23 +423,21 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
   public IReadOnlyCollection<T> GetUnfilteredItems() =>
     _unfilteredSource ?? Root.Source;
 
-  // TODO cache the menu and sort commands
+  // TODO cache the menu
   public override IEnumerable<MenuItem> GetMenu(object item) {
     var items = new List<MenuItem>() {
       new(OpenGroupByDialogCommand, item),
       new(ShuffleCommand, item)
     };
 
-    var cmds = GetSortFields()
-      .Select(field => new RelayCommand<CollectionViewGroup<T>>(g => _sortBy(g!, field), g => g != null, null, field.Name))
-      .OrderBy(x => x.Text)
-      .ToArray();
+    items.Add(new MenuItem(Res.IconSort, "Sort by",
+      GetSortFields().Select(field => new MenuItem(
+        new RelayCommand<CollectionViewGroup<T>>(g => _sortBy(g!, field), g => g != null, null, field.Name), item))));
 
-    items.Add(new MenuItem(Res.IconSort, "Sort by", cmds.Select(cmd => new MenuItem(cmd, item))));
-
-    if (ViewModesCommands.Length > 1)
-      foreach (var vmc in ViewModesCommands)
-        items.Add(new(vmc, item));
+    if (ViewModes.Length > 1)
+      items.Add(new MenuItem(null, "View",
+        ViewModes.Select(vm => new MenuItem(
+          new RelayCommand<ICollectionViewGroup>(g => g?.SetViewMode(vm), g => g != null, null, _viewModeTextMap[vm]), item))));   
 
     return items;
   }

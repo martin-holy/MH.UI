@@ -36,6 +36,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
   public bool IsReWrapPending { get; set; } = true;
   public new string Icon => (GroupedBy?.Data as IListItem)?.Icon ?? Res.IconDashSquareDotted;
   public new string Name => (GroupedBy?.Data as IListItem)?.Name ?? string.Empty;
+  public IEnumerable<MenuItem> Menu => View.GetMenu(this);
   protected CollectionView.SortField<T>? CurrentSortField;
   protected CollectionView.SortMode CurrentSortMode = CollectionView.SortMode.Ascending;
 
