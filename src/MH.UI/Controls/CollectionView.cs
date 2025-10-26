@@ -78,6 +78,8 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
   public T? LastSelectedItem { get; protected set; }
   public CollectionViewGroup<T>? TopGroup { get; set; }
   public CollectionViewRow<T>? LastSelectedRow { get; protected set; }
+  public CollectionView.SortField<T>? DefaultSortField { get; set; }
+  public CollectionView.SortMode DefaultSortMode { get; set; } = CollectionView.SortMode.Ascending;
 
   public string PositionSlashCount {
     get {
@@ -153,7 +155,9 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
       IsThenBy = groupMode is GroupMode.ThenBy or GroupMode.ThenByRecursive,
       IsRecursive = groupMode is GroupMode.GroupByRecursive or GroupMode.ThenByRecursive,
       GroupByItems = groupByItems?.Length == 0 ? null : groupByItems,
-      Width = Host?.Width ?? 0
+      Width = Host?.Width ?? 0,
+      CurrentSortField = DefaultSortField,
+      CurrentSortMode = DefaultSortMode
     };
 
     TopGroup = null;
@@ -446,4 +450,22 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
     group.SortBy(field, Keyboard.IsShiftOn());
     _clearLastSelected();
   }
+
+  public List<T> Sort(List<T> source, SortField<T>? field, SortMode mode) {
+    if (field == null) return source;
+
+    var cmp = field.Comparer;
+
+    source.Sort((a, b) => {
+      var va = field.Selector(a);
+      var vb = field.Selector(b);
+      int result = cmp != null ? cmp.Compare(va, vb) : va.CompareTo(vb);
+      return mode == SortMode.Descending ? -result : result;
+    });
+
+    return source;
+  }
+
+  public List<T> GetSorted(List<T> items, SortField<T>? field = null, SortMode? mode = null) =>
+    Sort(items, field ?? DefaultSortField, mode ?? DefaultSortMode);
 }

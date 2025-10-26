@@ -37,8 +37,8 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
   public new string Icon => (GroupedBy?.Data as IListItem)?.Icon ?? Res.IconDashSquareDotted;
   public new string Name => (GroupedBy?.Data as IListItem)?.Name ?? string.Empty;
   public IEnumerable<MenuItem> Menu => View.GetMenu(this);
-  protected CollectionView.SortField<T>? CurrentSortField;
-  protected CollectionView.SortMode CurrentSortMode = CollectionView.SortMode.Ascending;
+  public CollectionView.SortField<T>? CurrentSortField { get; set; }
+  public CollectionView.SortMode CurrentSortMode { get; set; } = CollectionView.SortMode.Ascending;
 
   public CollectionViewGroup(CollectionView<T> view, List<T> source, GroupByItem<T>? groupedBy) {
     View = view;
@@ -56,6 +56,8 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
     IsThenBy = parent.IsThenBy;
     _width = parent.Width - View.GroupContentOffset;
     GroupByItems = parent._getGroupByItemsForSubGroup();
+    CurrentSortField = parent.CurrentSortField;
+    CurrentSortMode = parent.CurrentSortMode;
   }
 
   private GroupByItem<T>[]? _getGroupByItemsForSubGroup() {
@@ -431,16 +433,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
 
   private void _applySort() {
     if (CurrentSortField == null) return;
-
-    var cmp = CurrentSortField.Comparer;
-
-    Source.Sort((a, b) => {
-      var va = CurrentSortField.Selector(a);
-      var vb = CurrentSortField.Selector(b);
-      int result = cmp != null ? cmp.Compare(va, vb) : va.CompareTo(vb);
-      return CurrentSortMode == CollectionView.SortMode.Descending ? -result : result;
-    });
-
+    View.Sort(Source, CurrentSortField, CurrentSortMode);
     ReWrap();
   }
 
