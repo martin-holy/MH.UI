@@ -142,7 +142,9 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
     OnPropertyChanged(nameof(PositionSlashCount));
   }
 
-  public void Reload(List<T> source, GroupMode groupMode, GroupByItem<T>[]? groupByItems, bool expandAll, bool removeEmpty = true) {
+  public void Reload(List<T> source, GroupMode groupMode, GroupByItem<T>[]? groupByItems, bool expandAll, bool sortSource) {
+    if (sortSource) Sort(source);
+
     if (_filter != null) {
       _unfilteredSource = source.ToList();
       source = source.Where(_filter.Filter).ToList();
@@ -156,7 +158,7 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
       IsRecursive = groupMode is GroupMode.GroupByRecursive or GroupMode.ThenByRecursive,
       GroupByItems = groupByItems?.Length == 0 ? null : groupByItems,
       Width = Host?.Width ?? 0,
-      CurrentSortField = DefaultSortField,
+      CurrentSortField = sortSource ? DefaultSortField : null,
       CurrentSortMode = DefaultSortMode
     };
 
@@ -166,7 +168,7 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
     _updateRoot(root, _ => {
       Root = root;
       Root.GroupIt();
-      if (removeEmpty) CollectionViewGroup<T>.RemoveEmptyGroups(Root, null, null);
+      CollectionViewGroup<T>.RemoveEmptyGroups(Root, null, null);
       if (expandAll) Root.SetExpanded<CollectionViewGroup<T>>(true);
     });
 
@@ -451,7 +453,8 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
     _clearLastSelected();
   }
 
-  public List<T> Sort(List<T> source, SortField<T>? field, SortMode mode) {
+  public List<T> Sort(List<T> source, SortField<T>? field = null, SortMode mode = SortMode.Ascending) {
+    if (field == null) field = DefaultSortField;
     if (field == null) return source;
 
     var cmp = field.Comparer;
@@ -465,7 +468,4 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
 
     return source;
   }
-
-  public List<T> GetSorted(List<T> items, SortField<T>? field = null, SortMode? mode = null) =>
-    Sort(items, field ?? DefaultSortField, mode ?? DefaultSortMode);
 }
