@@ -415,15 +415,9 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
       Sort();
   }
 
-  public void SortBy(CollectionView.SortField<T> field, bool recursive) {
-    if (CurrentSortField == field)
-      CurrentSortMode = CurrentSortMode == CollectionView.SortMode.Ascending
-        ? CollectionView.SortMode.Descending
-        : CollectionView.SortMode.Ascending;
-    else {
-      CurrentSortField = field;
-      CurrentSortMode = CollectionView.SortMode.Ascending;
-    }
+  public void SortBy(CollectionView.SortField<T>? field, CollectionView.SortMode mode, bool recursive) {
+    CurrentSortField = field;
+    CurrentSortMode = mode;
 
     if (recursive)
       DoForAll(this, x => x._applySort());

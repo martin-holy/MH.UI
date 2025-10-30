@@ -72,6 +72,8 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
   private List<T>? _unfilteredSource;
   private ICollectionViewFilter<T>? _filter;
   private bool _filterIsChanging;
+  private List<MenuItem>? _menu;
+  private RelayCommand[] _menuSortByFieldCommands = [];
 
   public CollectionViewGroup<T> Root { get; set; }
   public T? TopItem { get; set; }
@@ -98,6 +100,8 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
   public AsyncRelayCommand<CollectionViewGroup<T>> OpenGroupByDialogCommand { get; }
   public RelayCommand<CollectionViewGroup<T>> ShuffleCommand { get; }
   public RelayCommand<CollectionViewGroup<T>> SortCommand { get; }
+  public RelayCommand<CollectionViewGroup<T>> SortAscendingCommand { get; }
+  public RelayCommand<CollectionViewGroup<T>> SortDescendingCommand { get; }
 
   public event EventHandler<T>? ItemOpenedEvent;
   public new event EventHandler<SelectionEventArgs<T>>? ItemSelectedEvent;
@@ -108,6 +112,8 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
     OpenGroupByDialogCommand = new(_openGroupByDialog, Res.IconGroup, "Group by");
     ShuffleCommand = new(_shuffle, Res.IconRandom, "Shuffle");
     SortCommand = new(_sort, Res.IconSort, "Sort");
+    SortAscendingCommand = new(g => _sortBy(g!, g!.CurrentSortField, SortMode.Ascending), g => g != null, null, "Ascending");
+    SortDescendingCommand = new(g => _sortBy(g!, g!.CurrentSortField, SortMode.Descending), g => g != null, null, "Descending");
   }
 
   protected void _raiseItemOpened(T item) => ItemOpenedEvent?.Invoke(this, item);
@@ -429,27 +435,52 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
   public IReadOnlyCollection<T> GetUnfilteredItems() =>
     _unfilteredSource ?? Root.Source;
 
-  // TODO cache the menu
   public override IEnumerable<MenuItem> GetMenu(object item) {
+    if (_menu == null) _menu = _createMenu(item);
+    _updateMenuCommandParameters(_menu, item);
+    _updateMenuSortCommands(_menu, item);
+    return _menu;
+  }
+
+  private List<MenuItem> _createMenu(object item) {
     var items = new List<MenuItem>() {
       new(OpenGroupByDialogCommand, item),
       new(ShuffleCommand, item)
     };
 
-    items.Add(new MenuItem(Res.IconSort, "Sort by",
-      GetSortFields().Select(field => new MenuItem(
-        new RelayCommand<CollectionViewGroup<T>>(g => _sortBy(g!, field), g => g != null, null, field.Name), item))));
+    _menuSortByFieldCommands = GetSortFields().Select(field =>
+      new RelayCommand<CollectionViewGroup<T>>(g => _sortBy(g!, field, g!.CurrentSortMode), g => g != null, null, field.Name)).ToArray();
+    var sortMenu = new MenuItem(Res.IconSort, "Sort by", _menuSortByFieldCommands.Select(cmd => new MenuItem(cmd, item)));
+    sortMenu.Add(new MenuItem(SortAscendingCommand, item));
+    sortMenu.Add(new MenuItem(SortDescendingCommand, item));
+    items.Add(sortMenu);
 
     if (ViewModes.Length > 1)
       items.Add(new MenuItem(null, "View",
         ViewModes.Select(vm => new MenuItem(
-          new RelayCommand<ICollectionViewGroup>(g => g?.SetViewMode(vm), g => g != null, null, _viewModeTextMap[vm]), item))));   
+          new RelayCommand<ICollectionViewGroup>(g => g?.SetViewMode(vm), g => g != null, null, _viewModeTextMap[vm]), item))));
 
     return items;
   }
 
-  private void _sortBy(CollectionViewGroup<T> group, SortField<T> field) {
-    group.SortBy(field, Keyboard.IsShiftOn());
+  private void _updateMenuCommandParameters(IEnumerable<MenuItem> items, object parameter) {
+    foreach (var mi in items) {
+      mi.CommandParameter = parameter;
+      _updateMenuCommandParameters(mi.Items.Cast<MenuItem>(), parameter);
+    }
+  }
+
+  private void _updateMenuSortCommands(List<MenuItem> menu, object item) {
+    if (item is not CollectionViewGroup<T> group) return;
+    SortAscendingCommand.Icon = group.CurrentSortMode == SortMode.Ascending ? Res.IconSmallDot : null;
+    SortDescendingCommand.Icon = group.CurrentSortMode == SortMode.Descending ? Res.IconSmallDot : null;
+    var fieldName = group.CurrentSortField?.Name ?? string.Empty;
+    foreach (var cmd in _menuSortByFieldCommands)
+      cmd.Icon = fieldName.Equals(cmd.Text) ? Res.IconSmallDot : null;
+  }
+
+  private void _sortBy(CollectionViewGroup<T> group, SortField<T>? field, SortMode mode) {
+    group.SortBy(field, mode, Keyboard.IsShiftOn());
     _clearLastSelected();
   }
 
