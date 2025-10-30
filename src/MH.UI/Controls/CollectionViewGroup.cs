@@ -38,7 +38,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
   public new string Name => (GroupedBy?.Data as IListItem)?.Name ?? string.Empty;
   public IEnumerable<MenuItem> Menu => View.GetMenu(this);
   public CollectionView.SortField<T>? CurrentSortField { get; set; }
-  public CollectionView.SortMode CurrentSortMode { get; set; } = CollectionView.SortMode.Ascending;
+  public CollectionView.SortOrder CurrentSortOrder { get; set; } = CollectionView.SortOrder.Ascending;
 
   public CollectionViewGroup(CollectionView<T> view, List<T> source, GroupByItem<T>? groupedBy) {
     View = view;
@@ -57,7 +57,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
     _width = parent.Width - View.GroupContentOffset;
     GroupByItems = parent._getGroupByItemsForSubGroup();
     CurrentSortField = parent.CurrentSortField;
-    CurrentSortMode = parent.CurrentSortMode;
+    CurrentSortOrder = parent.CurrentSortOrder;
   }
 
   private GroupByItem<T>[]? _getGroupByItemsForSubGroup() {
@@ -415,9 +415,9 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
       Sort();
   }
 
-  public void SortBy(CollectionView.SortField<T>? field, CollectionView.SortMode mode, bool recursive) {
+  public void SortBy(CollectionView.SortField<T>? field, CollectionView.SortOrder order, bool recursive) {
     CurrentSortField = field;
-    CurrentSortMode = mode;
+    CurrentSortOrder = order;
 
     if (recursive)
       DoForAll(this, x => x._applySort());
@@ -427,7 +427,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
 
   private void _applySort() {
     if (CurrentSortField == null) return;
-    View.Sort(Source, CurrentSortField, CurrentSortMode);
+    View.Sort(Source, CurrentSortField, CurrentSortOrder);
     ReWrap();
   }
 

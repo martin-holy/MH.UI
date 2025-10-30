@@ -19,7 +19,7 @@ public interface ICollectionViewHost : ITreeViewHost;
 public abstract class CollectionView : TreeView {
   private ICollectionViewHost? _host;
 
-  public enum SortMode { Ascending, Descending }
+  public enum SortOrder { Ascending, Descending }
   public enum ViewMode { Content, Details, List, ThumbBig, ThumbMedium, ThumbSmall, Tiles }
 
   public record SortField<T>(string Name, Func<T, IComparable> Selector, IComparer? Comparer = null);
@@ -81,7 +81,7 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
   public CollectionViewGroup<T>? TopGroup { get; set; }
   public CollectionViewRow<T>? LastSelectedRow { get; protected set; }
   public CollectionView.SortField<T>? DefaultSortField { get; set; }
-  public CollectionView.SortMode DefaultSortMode { get; set; } = CollectionView.SortMode.Ascending;
+  public CollectionView.SortOrder DefaultSortOrder { get; set; } = CollectionView.SortOrder.Ascending;
 
   public string PositionSlashCount {
     get {
@@ -112,8 +112,8 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
     OpenGroupByDialogCommand = new(_openGroupByDialog, Res.IconGroup, "Group by");
     ShuffleCommand = new(_shuffle, Res.IconRandom, "Shuffle");
     SortCommand = new(_sort, Res.IconSort, "Sort");
-    SortAscendingCommand = new(g => _sortBy(g!, g!.CurrentSortField, SortMode.Ascending), g => g != null, null, "Ascending");
-    SortDescendingCommand = new(g => _sortBy(g!, g!.CurrentSortField, SortMode.Descending), g => g != null, null, "Descending");
+    SortAscendingCommand = new(g => _sortBy(g!, g!.CurrentSortField, SortOrder.Ascending), g => g != null, null, "Ascending");
+    SortDescendingCommand = new(g => _sortBy(g!, g!.CurrentSortField, SortOrder.Descending), g => g != null, null, "Descending");
   }
 
   protected void _raiseItemOpened(T item) => ItemOpenedEvent?.Invoke(this, item);
@@ -165,7 +165,7 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
       GroupByItems = groupByItems?.Length == 0 ? null : groupByItems,
       Width = Host?.Width ?? 0,
       CurrentSortField = sortSource ? DefaultSortField : null,
-      CurrentSortMode = DefaultSortMode
+      CurrentSortOrder = DefaultSortOrder
     };
 
     TopGroup = null;
@@ -449,7 +449,7 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
     };
 
     _menuSortByFieldCommands = GetSortFields().Select(field =>
-      new RelayCommand<CollectionViewGroup<T>>(g => _sortBy(g!, field, g!.CurrentSortMode), g => g != null, null, field.Name)).ToArray();
+      new RelayCommand<CollectionViewGroup<T>>(g => _sortBy(g!, field, g!.CurrentSortOrder), g => g != null, null, field.Name)).ToArray();
     var sortMenu = new MenuItem(Res.IconSort, "Sort by", _menuSortByFieldCommands.Select(cmd => new MenuItem(cmd, item)));
     sortMenu.Add(new MenuItem(SortAscendingCommand, item));
     sortMenu.Add(new MenuItem(SortDescendingCommand, item));
@@ -472,19 +472,19 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
 
   private void _updateMenuSortCommands(List<MenuItem> menu, object item) {
     if (item is not CollectionViewGroup<T> group) return;
-    SortAscendingCommand.Icon = group.CurrentSortMode == SortMode.Ascending ? Res.IconSmallDot : null;
-    SortDescendingCommand.Icon = group.CurrentSortMode == SortMode.Descending ? Res.IconSmallDot : null;
+    SortAscendingCommand.Icon = group.CurrentSortOrder == SortOrder.Ascending ? Res.IconSmallDot : null;
+    SortDescendingCommand.Icon = group.CurrentSortOrder == SortOrder.Descending ? Res.IconSmallDot : null;
     var fieldName = group.CurrentSortField?.Name ?? string.Empty;
     foreach (var cmd in _menuSortByFieldCommands)
       cmd.Icon = fieldName.Equals(cmd.Text) ? Res.IconSmallDot : null;
   }
 
-  private void _sortBy(CollectionViewGroup<T> group, SortField<T>? field, SortMode mode) {
-    group.SortBy(field, mode, Keyboard.IsShiftOn());
+  private void _sortBy(CollectionViewGroup<T> group, SortField<T>? field, SortOrder order) {
+    group.SortBy(field, order, Keyboard.IsShiftOn());
     _clearLastSelected();
   }
 
-  public List<T> Sort(List<T> source, SortField<T>? field = null, SortMode mode = SortMode.Ascending) {
+  public List<T> Sort(List<T> source, SortField<T>? field = null, SortOrder order = SortOrder.Ascending) {
     if (field == null) field = DefaultSortField;
     if (field == null) return source;
 
@@ -494,7 +494,7 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
       var va = field.Selector(a);
       var vb = field.Selector(b);
       int result = cmp != null ? cmp.Compare(va, vb) : va.CompareTo(vb);
-      return mode == SortMode.Descending ? -result : result;
+      return order == SortOrder.Descending ? -result : result;
     });
 
     return source;
