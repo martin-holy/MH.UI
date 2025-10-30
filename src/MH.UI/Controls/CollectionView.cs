@@ -51,6 +51,11 @@ public abstract class CollectionView : TreeView {
   public virtual void SetExpanded(object group) { }
   public virtual IEnumerable<MenuItem> GetMenu(object item) => [];
 
+  public static KeyValuePair<SortOrder, string>[] SortOrderTextMap { get; } = [
+    new(SortOrder.Ascending, "Ascending"),
+    new(SortOrder.Descending, "Descending")
+  ];
+
   protected static readonly Dictionary<ViewMode, string> _viewModeTextMap = new() {
     { ViewMode.Content, "Content" },
     { ViewMode.Details, "Details" },
@@ -484,9 +489,10 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
     _clearLastSelected();
   }
 
-  public List<T> Sort(List<T> source, SortField<T>? field = null, SortOrder order = SortOrder.Ascending) {
+  public List<T> Sort(List<T> source, SortField<T>? field = null, SortOrder? order = null) {
     if (field == null) field = DefaultSortField;
     if (field == null) return source;
+    if (order == null) order = DefaultSortOrder;
 
     var cmp = field.Comparer;
 
