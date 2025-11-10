@@ -1,12 +1,19 @@
 ﻿using MH.UI.Controls;
 using MH.Utils.BaseClasses;
 using System;
+using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace MH.UI.Dialogs;
 
-public class ProgressDialog<T> : Dialog {
+public interface IProgressDialog : INotifyPropertyChanged {
+  int ProgressMax { get; set; }
+  string? ProgressText { get; set; }
+  int ProgressValue { get; set; }
+}
+
+public class ProgressDialog<T> : Dialog, IProgressDialog {
   protected readonly T[] _items;
   private readonly bool _autoClose;
   private int _progressMax;
