@@ -1,23 +1,43 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <Authors>Martin Holý</Authors>
-    <Copyright>Martin Holý</Copyright>
-    <RunAnalyzersDuringBuild>False</RunAnalyzersDuringBuild>
-    <RunAnalyzersDuringLiveAnalysis>False</RunAnalyzersDuringLiveAnalysis>
-    <EnableNETAnalyzers>True</EnableNETAnalyzers>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <Version>$(CurrentDateTimeVersion)</Version>
-    <AssemblyVersion>$(CurrentDateTimeVersion)</AssemblyVersion>
-    <FileVersion>$(CurrentDateTimeVersion)</FileVersion>
-  </PropertyGroup>
+		<Authors>Martin Holý</Authors>
+		<Company>Martin Holý</Company>
+		<Copyright>Martin Holý</Copyright>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\MH.Utils\src\MH.Utils\MH.Utils.csproj" />
-  </ItemGroup>
+		<RunAnalyzersDuringBuild>False</RunAnalyzersDuringBuild>
+		<RunAnalyzersDuringLiveAnalysis>False</RunAnalyzersDuringLiveAnalysis>
+		<EnableNETAnalyzers>True</EnableNETAnalyzers>
+
+		<!-- Package info for NuGet -->
+		<PackageId>MH.UI</PackageId>
+		<Description>Cross-platform UI library. Includes CollectionView, TreeView, TabControl, dialogs, MediaPlayer, ZoomAndPan controls, and other UI helpers.</Description>
+		<PackageTags>UI, Controls, CollectionView, TreeView, TabControl, Dialogs, cross-platform, MVVM</PackageTags>
+		<PackageLicenseExpression>CC0-1.0</PackageLicenseExpression>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/martin-holy/MH.UI</RepositoryUrl>
+
+		<Version>4.0.0</Version>
+		<AssemblyVersion>4.0.0.0</AssemblyVersion>
+		<FileVersion>4.0.0.0</FileVersion>
+
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+	</PropertyGroup>
+
+	<ItemGroup Condition="'$(Configuration)'=='Release'">
+		<PackageReference Include="MH.Utils" Version="3.0.0" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Configuration)'=='Debug'">
+		<ProjectReference Include="..\..\..\MH.Utils\src\MH.Utils\MH.Utils.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\..\README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
 
 </Project>
