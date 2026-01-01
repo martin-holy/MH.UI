@@ -1,6 +1,7 @@
 ﻿using MH.Utils.BaseClasses;
 using MH.Utils.Interfaces;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Xml.Linq;
@@ -91,4 +92,7 @@ public class TabControl : ObservableObject {
     OnPropertyChanged(nameof(Selected));
     OnPropertyChanged(nameof(Selected.Data));
   }
+
+  public virtual IEnumerable<MenuItem> ItemMenuFactory(object item) =>
+    [new(CloseTabCommand, item)];
 }
