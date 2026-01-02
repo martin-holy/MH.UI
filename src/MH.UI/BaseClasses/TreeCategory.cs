@@ -4,8 +4,10 @@ using MH.UI.Interfaces;
 using MH.Utils;
 using MH.Utils.BaseClasses;
 using MH.Utils.EventsArgs;
+using MH.Utils.Extensions;
 using MH.Utils.Interfaces;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -29,6 +31,10 @@ public class TreeCategory : TreeItem, ITreeCategory {
 
   public static AsyncRelayCommand<ITreeItem> ItemMoveToGroupCommand { get; } = new(
     (item, _) => _getCategory(item)?.ItemMoveToGroup(item!) ?? Task.CompletedTask, null, "Move to group");
+
+  public static AsyncRelayCommand<ITreeGroup> GroupMoveInItemsCommand { get; } = new(
+    (item, _) => _getCategory(item)?.GroupMoveInItems(item!) ?? Task.CompletedTask,
+    item => _getCategory(item)?.GroupAnyItemsToMove(item!) ?? false, null, "Move items here");
 
   public static AsyncRelayCommand<ITreeCategory> GroupCreateCommand { get; } = new(
     (item, _) => _getCategory(item)?.GroupCreate(item!) ?? Task.CompletedTask, null, "New Group");
@@ -54,6 +60,9 @@ public class TreeCategory : TreeItem, ITreeCategory {
   public virtual Task GroupRename(ITreeGroup group) => throw new NotImplementedException();
   public virtual Task GroupDelete(ITreeGroup group) => throw new NotImplementedException();
   public virtual void GroupMove(ITreeGroup group, ITreeGroup dest, bool aboveDest) => throw new NotImplementedException();
+  public virtual Task GroupMoveInItems(ITreeGroup group) => throw new NotImplementedException();
+  public virtual IEnumerable<ITreeItem> GroupGetItemsToMove(ITreeGroup group) => [];
+  public virtual bool GroupAnyItemsToMove(ITreeGroup group) => false;
 
   protected virtual void _onItemSelected(object item) { }
 
@@ -175,6 +184,20 @@ public class TreeCategory<TI>(TreeView treeView, string icon, string name, int i
 
     AfterDropEvent?.Invoke(this, new(src, dest, aboveDest, copy));
     return Task.CompletedTask;
+  }
+
+  public override async Task GroupMoveInItems(ITreeGroup group) {
+    var itemsToMove = GroupGetItemsToMove(group).ToArray();
+    if (itemsToMove.Length == 0) return;
+
+    if (await Dialog.ShowAsync(new MessageDialog(
+      $"Move items to group '{group.Name}'",
+      "Do you really want to move {0} item{1} to this group?".Plural(itemsToMove.Length),
+      Res.IconQuestion,
+      true)) != 1) return;
+
+    foreach (var item in itemsToMove)
+      _dataAdapter.ItemMove(item, group, false);
   }
 
   protected static async Task<bool> _deleteAccepted(string name) =>
