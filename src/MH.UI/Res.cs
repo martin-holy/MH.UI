@@ -3,6 +3,7 @@
 public static class Res {
   public const string IconAutoPlay = "IconAutoPlay";
   public const string IconDashSquareDotted = "IconDashSquareDotted";
+  public const string IconExpandRect = "IconExpandRect";
   public const string IconGroup = "IconGroup";
   public const string IconCheckMark = "IconCheckMark";
   public const string IconChevronDown = "IconChevronDown";
@@ -15,6 +16,7 @@ public static class Res {
   public const string IconQuestion = "IconQuestion";
   public const string IconRandom = "IconRandom";
   public const string IconSave = "IconSave";
+  public const string IconShrinkRect = "IconShrinkRect";
   public const string IconSmallDot = "IconSmallDot";
   public const string IconSort = "IconSort";
   public const string IconStop = "IconStop";
