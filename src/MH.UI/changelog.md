@@ -1,3 +1,6 @@
+4.2.0:
+	- [N] Res: IconExpandRect and IconShrinkRect
+
 4.1.0:
 	- [N] TabControl: virtual ItemMenuFactory method
 	- [N] TreeCategory: GroupMoveInItemsCommand
