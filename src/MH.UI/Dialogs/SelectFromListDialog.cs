@@ -8,7 +8,15 @@ public class SelectFromListDialog : Dialog {
   private IListItem? _selectedItem;
 
   public IListItem[] Items { get; }
-  public IListItem? SelectedItem { get => _selectedItem; private set { _selectedItem = value; OnPropertyChanged(); } }
+  public IListItem? SelectedItem {
+    get => _selectedItem;
+    set {
+      if (_selectedItem == value) return;
+      _selectedItem = value;
+      OkCommand.RaiseCanExecuteChanged();
+      OnPropertyChanged();
+    }
+  }
 
   public new RelayCommand OkCommand { get; }
   public RelayCommand<IListItem> SelectCommand { get; }
