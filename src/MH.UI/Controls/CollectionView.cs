@@ -181,6 +181,7 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
       Root.GroupIt();
       CollectionViewGroup<T>.RemoveEmptyGroups(Root, null, null);
       if (expandAll) Root.SetExpanded<CollectionViewGroup<T>>(true);
+      CollectionViewGroup<T>.ReWrapAll(Root);
     });
 
     _groupByItemsRoots.Clear();
