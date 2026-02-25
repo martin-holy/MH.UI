@@ -1,6 +1,7 @@
 ﻿using MH.UI.Controls;
 using MH.Utils.Interfaces;
 using System;
+using System.Collections.Generic;
 
 namespace MH.UI.Interfaces; 
 
@@ -17,7 +18,8 @@ public interface ICollectionViewGroup : ITreeItem {
 }
 
 public interface ICollectionViewRow : ITreeItem {
-  System.Collections.Generic.IEnumerable<ISelectable> Leaves { get; }
+  IEnumerable<ISelectable> Leaves { get; }
+  int Hash { get; }
 }
 
 public interface ICollectionViewFilter<in T> {

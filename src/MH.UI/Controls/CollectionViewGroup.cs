@@ -313,6 +313,8 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
         foreach (var item in newRow)
           items.Add(item);
       });
+
+      oldRow.OnPropertyChanged(nameof(ICollectionViewRow.Hash));
     }
 
     _isViewModePending = false;
