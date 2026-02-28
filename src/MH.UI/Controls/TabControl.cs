@@ -93,6 +93,6 @@ public class TabControl : ObservableObject {
     OnPropertyChanged(nameof(Selected.Data));
   }
 
-  public virtual IEnumerable<MenuItem> ItemMenuFactory(object item) =>
-    [new(CloseTabCommand, item)];
+  public virtual IEnumerable<ITreeItem> ItemMenuFactory(object item) =>
+    [new MenuItem(CloseTabCommand, item)];
 }
