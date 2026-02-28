@@ -49,7 +49,7 @@ public abstract class CollectionView : TreeView {
   public virtual void OpenItem(object? item) { }
   public virtual void SelectItem(object row, object item, bool isCtrlOn, bool isShiftOn) { }
   public virtual void SetExpanded(object group) { }
-  public virtual IEnumerable<MenuItem> GetMenu(object item) => [];
+  public virtual IEnumerable<ITreeItem> GetMenu(object item) => [];
 
   public static KeyValuePair<SortOrder, string>[] SortOrderTextMap { get; } = [
     new(SortOrder.Ascending, "Ascending"),
@@ -77,7 +77,7 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
   private List<T>? _unfilteredSource;
   private ICollectionViewFilter<T>? _filter;
   private bool _filterIsChanging;
-  private List<MenuItem>? _menu;
+  private List<ITreeItem>? _menu;
   private RelayCommand[] _menuSortByFieldCommands = [];
 
   public CollectionViewGroup<T> Root { get; set; }
@@ -441,22 +441,23 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
   public IReadOnlyCollection<T> GetUnfilteredItems() =>
     _unfilteredSource ?? Root.Source;
 
-  public override IEnumerable<MenuItem> GetMenu(object item) {
+  public override IEnumerable<ITreeItem> GetMenu(object item) {
     if (_menu == null) _menu = _createMenu(item);
     _updateMenuCommandParameters(_menu, item);
-    _updateMenuSortCommands(_menu, item);
+    _updateMenuSortCommands(item);
     return _menu;
   }
 
-  private List<MenuItem> _createMenu(object item) {
-    var items = new List<MenuItem>() {
-      new(OpenGroupByDialogCommand, item),
-      new(ShuffleCommand, item)
+  private List<ITreeItem> _createMenu(object item) {
+    var items = new List<ITreeItem>() {
+      new MenuItem(OpenGroupByDialogCommand, item),
+      new MenuItem(ShuffleCommand, item)
     };
 
     _menuSortByFieldCommands = GetSortFields().Select(field =>
       new RelayCommand<CollectionViewGroup<T>>(g => _sortBy(g!, field, g!.CurrentSortOrder), g => g != null, null, field.Name)).ToArray();
     var sortMenu = new MenuItem(Res.IconSort, "Sort by", _menuSortByFieldCommands.Select(cmd => new MenuItem(cmd, item)));
+    sortMenu.Add(new MenuItemSeparator());
     sortMenu.Add(new MenuItem(SortAscendingCommand, item));
     sortMenu.Add(new MenuItem(SortDescendingCommand, item));
     items.Add(sortMenu);
@@ -469,14 +470,15 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
     return items;
   }
 
-  private void _updateMenuCommandParameters(IEnumerable<MenuItem> items, object parameter) {
-    foreach (var mi in items) {
+  private void _updateMenuCommandParameters(IEnumerable<ITreeItem> items, object parameter) {
+    foreach (var ti in items) {
+      if (ti is not MenuItem mi) continue;
       mi.CommandParameter = parameter;
-      _updateMenuCommandParameters(mi.Items.Cast<MenuItem>(), parameter);
+      _updateMenuCommandParameters(mi.Items, parameter);
     }
   }
 
-  private void _updateMenuSortCommands(List<MenuItem> menu, object item) {
+  private void _updateMenuSortCommands(object item) {
     if (item is not CollectionViewGroup<T> group) return;
     SortAscendingCommand.Icon = group.CurrentSortOrder == SortOrder.Ascending ? Res.IconSmallDot : null;
     SortDescendingCommand.Icon = group.CurrentSortOrder == SortOrder.Descending ? Res.IconSmallDot : null;
