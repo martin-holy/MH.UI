@@ -442,24 +442,30 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
     _unfilteredSource ?? Root.Source;
 
   public override IEnumerable<ITreeItem> GetMenu(object item) {
-    if (_menu == null) _menu = _createMenu(item);
-    _updateMenuCommandParameters(_menu, item);
-    _updateMenuSortCommands(item);
-    return _menu;
-  }
+    if (item is not CollectionViewGroup<T> group) return [];
 
-  private List<ITreeItem> _createMenu(object item) {
     var items = new List<ITreeItem>() {
-      new MenuItem(OpenGroupByDialogCommand, item),
-      new MenuItem(ShuffleCommand, item)
+      new MenuItem(OpenGroupByDialogCommand, group),
+      new MenuItem(ShuffleCommand, group)
     };
 
-    _menuSortByFieldCommands = GetSortFields().Select(field =>
-      new RelayCommand<CollectionViewGroup<T>>(g => _sortBy(g!, field, g!.CurrentSortOrder), g => g != null, null, field.Name)).ToArray();
-    var sortMenu = new MenuItem(Res.IconSort, "Sort by", _menuSortByFieldCommands.Select(cmd => new MenuItem(cmd, item)));
+    var sortMenu = new MenuItem(Res.IconSort, "Sort by");
+
+    foreach (var field in GetSortFields()) {
+      var cmd = new RelayCommand<CollectionViewGroup<T>>(
+        g => _sortBy(g!, field, g!.CurrentSortOrder),
+        g => g != null,
+        group.CurrentSortField?.Name == field.Name ? Res.IconSmallDot : null,
+        field.Name);
+
+      sortMenu.Add(new MenuItem(cmd, group));
+    }
+
+    var sortAscIcon = group.CurrentSortOrder == SortOrder.Ascending ? Res.IconSmallDot : null;
+    var sortDescIcon = group.CurrentSortOrder == SortOrder.Descending ? Res.IconSmallDot : null;
     sortMenu.Add(new MenuItemSeparator());
-    sortMenu.Add(new MenuItem(SortAscendingCommand, item));
-    sortMenu.Add(new MenuItem(SortDescendingCommand, item));
+    sortMenu.Add(new MenuItem(SortAscendingCommand, item, sortAscIcon));
+    sortMenu.Add(new MenuItem(SortDescendingCommand, item, sortDescIcon));
     items.Add(sortMenu);
 
     if (ViewModes.Length > 1)
@@ -468,23 +474,6 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
           new RelayCommand<ICollectionViewGroup>(g => g?.SetViewMode(vm), g => g != null, null, _viewModeTextMap[vm]), item))));
 
     return items;
-  }
-
-  private void _updateMenuCommandParameters(IEnumerable<ITreeItem> items, object parameter) {
-    foreach (var ti in items) {
-      if (ti is not MenuItem mi) continue;
-      mi.CommandParameter = parameter;
-      _updateMenuCommandParameters(mi.Items, parameter);
-    }
-  }
-
-  private void _updateMenuSortCommands(object item) {
-    if (item is not CollectionViewGroup<T> group) return;
-    SortAscendingCommand.Icon = group.CurrentSortOrder == SortOrder.Ascending ? Res.IconSmallDot : null;
-    SortDescendingCommand.Icon = group.CurrentSortOrder == SortOrder.Descending ? Res.IconSmallDot : null;
-    var fieldName = group.CurrentSortField?.Name ?? string.Empty;
-    foreach (var cmd in _menuSortByFieldCommands)
-      cmd.Icon = fieldName.Equals(cmd.Text) ? Res.IconSmallDot : null;
   }
 
   private void _sortBy(CollectionViewGroup<T> group, SortField<T>? field, SortOrder order) {
