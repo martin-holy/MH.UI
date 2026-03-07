@@ -1,6 +1,8 @@
 4.3.0:
 	- [U] CollectionView: ReWrapAll after Reload
 	- [U] CollectionView: Separator in sort menu
+	- [N] IUnbindable
+	- [U] IBindable derives from IUnbindable
 
 4.2.0:
 	- [N] Res: IconExpandRect and IconShrinkRect
