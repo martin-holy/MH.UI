@@ -3,6 +3,8 @@
 	- [U] CollectionView: Separator in sort menu
 	- [N] IUnbindable
 	- [U] IBindable derives from IUnbindable
+	- [N] IBindable: Rebind
+	- [N] ViewBinder
 
 4.2.0:
 	- [N] Res: IconExpandRect and IconShrinkRect
