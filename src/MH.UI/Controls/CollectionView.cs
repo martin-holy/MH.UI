@@ -77,7 +77,6 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
   private List<T>? _unfilteredSource;
   private ICollectionViewFilter<T>? _filter;
   private bool _filterIsChanging;
-  private List<ITreeItem>? _menu;
   private RelayCommand[] _menuSortByFieldCommands = [];
 
   public CollectionViewGroup<T> Root { get; set; }
