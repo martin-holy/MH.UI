@@ -2,7 +2,7 @@
 using System;
 using System.ComponentModel;
 
-namespace MH.UI.Binding;
+namespace MH.UI;
 
 public sealed class ViewBinder<TSource, TProp, TValue> : IDisposable
   where TSource : class, INotifyPropertyChanged {
