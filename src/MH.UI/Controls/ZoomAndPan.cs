@@ -93,11 +93,11 @@ public class ZoomAndPan : ObservableObject {
   }
 
   private double _getMinScale() =>
-    Host == null ? 1.0 : _getFitScale(Host.Width, Host.Height);
+    Host == null ? 1.0 : GetFitScale(Host.Width, Host.Height, _contentWidth, _contentHeight);
 
   public void ScaleToFit() {
     if (Host == null) return;
-    var scale = _getFitScale(Host.Width, Host.Height);
+    var scale = GetFitScale(Host.Width, Host.Height, _contentWidth, _contentHeight);
     ScaleX = scale;
     ScaleY = scale;
     TransformX = (Host.Width - (_contentWidth * scale)) / 2;
@@ -112,14 +112,15 @@ public class ZoomAndPan : ObservableObject {
     ScaleToFit();
   }
 
-  private double _getFitScale(double hostW, double hostH) {
-    var scaleW = hostW / _contentWidth;
-    var scaleH = hostH / _contentHeight;
+  public double GetFitScale(double hostW, double hostH, double imgW, double imgH) {
+    var scaleW = hostW / imgW;
+    var scaleH = hostH / imgH;
     var scale = 1.0;
 
-    if (_shrinkToFill && (_contentWidth > hostW || _contentHeight > hostH)) {
+    if (_shrinkToFill && (imgW > hostW || imgH > hostH)) {
       scale = Math.Min(scaleW, scaleH);
-    } else if (_expandToFill && (_contentWidth < hostW || _contentHeight < hostH)) {
+    }
+    else if (_expandToFill && (imgW < hostW || imgH < hostH)) {
       scale = Math.Min(scaleW, scaleH);
     }
 
