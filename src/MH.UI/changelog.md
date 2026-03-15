@@ -5,6 +5,7 @@
 	- [U] IBindable derives from IUnbindable
 	- [N] IBindable: Rebind
 	- [N] ViewBinder
+	- [U] ZoomAndPan: public GetFitScale
 
 4.2.0:
 	- [N] Res: IconExpandRect and IconShrinkRect
