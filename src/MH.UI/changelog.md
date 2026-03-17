@@ -6,6 +6,7 @@
 	- [N] IBindable: Rebind
 	- [N] ViewBinder
 	- [U] ZoomAndPan: public GetFitScale
+	- [N] IBindable: DataContext prop
 
 4.2.0:
 	- [N] Res: IconExpandRect and IconShrinkRect
