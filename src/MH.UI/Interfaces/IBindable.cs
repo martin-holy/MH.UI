@@ -1,6 +1,8 @@
 ﻿namespace MH.UI.Interfaces;
 
-public interface IBindable<in T> : IUnbindable {
+public interface IBindable<T> : IUnbindable {
+  T? DataContext { get; }
+
   void Bind(T item);
 
   void Rebind(T item) {
