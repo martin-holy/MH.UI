@@ -1,3 +1,6 @@
+4.4.0:
+	- [N] TabControl: NoTabsText
+
 4.3.0:
 	- [U] CollectionView: ReWrapAll after Reload
 	- [U] CollectionView: Separator in sort menu
