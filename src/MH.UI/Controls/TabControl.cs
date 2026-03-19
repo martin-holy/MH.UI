@@ -4,18 +4,19 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Xml.Linq;
 
 namespace MH.UI.Controls;
 
 public class TabControl : ObservableObject {
   private IListItem? _selected;
   private bool _canCloseTabs;
+  private string _noTabsText = string.Empty;
 
   public ObservableCollection<IListItem> Tabs { get; } = [];
   public TabStrip TabStrip { get; set; }
   public IListItem? Selected { get => _selected; set => _setSelected(value); }
   public bool CanCloseTabs { get => _canCloseTabs; set { _canCloseTabs = value; OnPropertyChanged(); OnPropertyChanged(nameof(Selected.Data)); } }
+  public string NoTabsText { get => _noTabsText; set { _noTabsText = value; OnPropertyChanged(); } }
 
   public RelayCommand<IListItem> SelectTabCommand { get; }
   public RelayCommand<IListItem> CloseTabCommand { get; }
