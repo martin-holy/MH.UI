@@ -11,9 +11,7 @@ public sealed class Core {
 
   public static CoreVM VM { get; private set; } = null!;
 
-  private Core() {
-    Tasks.SetUiTaskScheduler();
-  }
+  private Core() { }
 
   public Task InitAsync(IProgress<string> progress) {
     return Task.Run(() => {
