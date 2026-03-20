@@ -16,19 +16,16 @@ public class Dialog(string title, string icon) : ObservableObject {
   public string Title { get => _title; set { _title = value; OnPropertyChanged(); } }
   public string Icon { get => _icon; set { _icon = value; OnPropertyChanged(); } }
   public DialogButton[] Buttons { get => _buttons; set { _buttons = value; OnPropertyChanged(); } }
-  public TaskCompletionSource<int> TaskCompletionSource { get; private set; } = new();
+  public TaskCompletionSource<int> TaskCompletionSource { get; private set; } = null!;
 
   public int Result {
     get => _result;
     set {
+      if (_result == value) return;
       _result = value;
-      _onResultChanged(value)
-        .ContinueWith(_ => {
-          TaskCompletionSource.SetResult(value);
-          return Tasks.RunOnUiThread(() => OnPropertyChanged());
-        });
+      _ = _handleResultAsync(value).ConfigureAwait(false);
+      }
     }
-  }
 
   public static RelayCommand<Dialog> CancelCommand { get; } = new(x => SetResult(x, 0), null, "Cancel");
   public static RelayCommand<Dialog> CloseCommand { get; } = new(x => SetResult(x, 0), null, "Close");
@@ -47,7 +44,7 @@ public class Dialog(string title, string icon) : ObservableObject {
 
   public static int Show(Dialog dialog) {
     if (_show == null) throw new NotImplementedException(nameof(_show));
-    dialog.TaskCompletionSource = new();
+    dialog.TaskCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
     return _show(dialog);
   }
 
@@ -56,10 +53,22 @@ public class Dialog(string title, string icon) : ObservableObject {
 
   public static Task<int> ShowAsync(Dialog dialog) {
     if (_showAsync == null) throw new NotImplementedException(nameof(_showAsync));
-    dialog.TaskCompletionSource = new();
+    dialog.TaskCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
     return _showAsync(dialog);
   }
 
   public static void SetShowAsyncImplementation(Func<Dialog, Task<int>> func) =>
     _showAsync = func;
+
+  private async Task _handleResultAsync(int result) {
+    try {
+      await _onResultChanged(result);
+      TaskCompletionSource.TrySetResult(result);
+      await Tasks.RunOnUiThread(() => OnPropertyChanged(nameof(Result)));
+    }
+    catch (Exception ex) {
+      TaskCompletionSource.TrySetException(ex);
+      Log.Error(ex);
+    }
+  }
 }
