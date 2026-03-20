@@ -1,5 +1,6 @@
 4.4.0:
 	- [N] TabControl: NoTabsText
+	- [C] Dialog: Result
 
 4.3.0:
 	- [U] CollectionView: ReWrapAll after Reload
