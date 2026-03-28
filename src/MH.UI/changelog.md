@@ -1,6 +1,7 @@
 4.4.0:
 	- [N] TabControl: NoTabsText
 	- [C] Dialog: Result
+	- [B] ZoomAndPan: GetFitScale
 
 4.3.0:
 	- [U] CollectionView: ReWrapAll after Reload
