@@ -115,16 +115,16 @@ public class ZoomAndPan : ObservableObject {
   public double GetFitScale(double hostW, double hostH, double imgW, double imgH) {
     var scaleW = hostW / imgW;
     var scaleH = hostH / imgH;
-    var scale = 1.0;
 
-    if (_shrinkToFill && (imgW > hostW || imgH > hostH)) {
-      scale = Math.Min(scaleW, scaleH);
-    }
-    else if (_expandToFill && (imgW < hostW || imgH < hostH)) {
-      scale = Math.Min(scaleW, scaleH);
-    }
+    var fit = Math.Min(scaleW, scaleH);
 
-    return scale;
+    var isSmaller = imgW < hostW && imgH < hostH;
+    var isBigger = imgW > hostW || imgH > hostH;
+
+    if (isSmaller && !_expandToFill) return 1.0;
+    if (isBigger && !_shrinkToFill) return 1.0;
+
+    return fit;
   }
 
   public bool CanStartAnimation() {
