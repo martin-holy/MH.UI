@@ -1,54 +1,45 @@
-﻿using MH.Utils;
-using MH.Utils.BaseClasses;
+﻿using MH.Utils.BaseClasses;
 using MH.Utils.Types;
 using System;
 
 namespace MH.UI.Controls;
 
 public interface IZoomAndPanHost {
-  public double Width { get; }
-  public double Height { get; }
-
-  public event EventHandler? HostSizeChangedEvent;
-  public event EventHandler<PointD>? HostMouseMoveEvent;
-  public event EventHandler<(PointD, PointD)>? HostMouseDownEvent;
-  public event EventHandler? HostMouseUpEvent;
-  public event EventHandler<(int, PointD)>? HostMouseWheelEvent;
-
   public void StartAnimation(double toValue, double duration, bool horizontal, Action onCompleted);
   public void StopAnimation();
 }
 
 public class ZoomAndPan : ObservableObject {
+  private bool _isPanning;
   private double _startX;
   private double _startY;
   private double _originX;
-  private double _originY;  
+  private double _originY;
+  private double _baseScale = 1.0;
+  private double _userScale = 1.0;
 
-  private double _scaleX;
-  private double _scaleY;
+  private double _scale = 1.0;
   private double _transformX;
   private double _transformY;
-  private double _contentWidth;
-  private double _contentHeight;
   private bool _isAnimationOn;
   private bool _expandToFill;
-  private bool _shrinkToFill = true;
   private bool _isZoomed;
+  private int _zoomStateIndex = 0;
   private IZoomAndPanHost? _host;
 
-  public IZoomAndPanHost? Host { get => _host; set => _setHost(value); }
-  public double ScaleX { get => _scaleX; set { _scaleX = value; OnPropertyChanged(); } }
-  public double ScaleY { get => _scaleY; set { _scaleY = value; OnPropertyChanged(); } }
+  public IZoomAndPanHost? Host { get => _host; set => _host = value; }
+  public double ScaleX => _scale;
+  public double ScaleY => _scale;
   public double TransformX { get => _transformX; set { _transformX = value; OnPropertyChanged(); } }
   public double TransformY { get => _transformY; set { _transformY = value; OnPropertyChanged(); } }
-  public double ContentWidth { get => _contentWidth; set { _contentWidth = value; OnPropertyChanged(); } }
-  public double ContentHeight { get => _contentHeight; set { _contentHeight = value; OnPropertyChanged(); } }
-  public bool IsAnimationOn { get => _isAnimationOn; set { _isAnimationOn = value; OnPropertyChanged(); } }
-  public bool ExpandToFill { get => _expandToFill; set { _expandToFill = value; OnPropertyChanged(); } }
-  public bool ShrinkToFill { get => _shrinkToFill; set { _shrinkToFill = value; OnPropertyChanged(); } }
-  public bool IsZoomed { get => _isZoomed; set { _isZoomed = value; OnPropertyChanged(); } }
-  public double ActualZoom => _scaleX * 100;
+  public double HostWidth { get; private set; }
+  public double HostHeight { get; private set; }
+  public double ContentWidth { get; private set; }
+  public double ContentHeight { get; private set; }
+  public bool IsAnimationOn { get => _isAnimationOn; private set { _isAnimationOn = value; OnPropertyChanged(); } }
+  public bool ExpandToFill { get => _expandToFill; set { _expandToFill = value; OnPropertyChanged(); _updateLayout(); } }
+  public bool IsZoomed { get => _isZoomed; private set { _isZoomed = value; OnPropertyChanged(); } }
+  public double ActualZoom => ScaleX * 100;
 
   public event EventHandler? AnimationEndedEvent;
   public event EventHandler? ContentMouseDownEvent;
@@ -56,113 +47,219 @@ public class ZoomAndPan : ObservableObject {
   private void _raiseAnimationEnded() => AnimationEndedEvent?.Invoke(this, EventArgs.Empty);
   private void _raiseContentMouseDown() => ContentMouseDownEvent?.Invoke(this, EventArgs.Empty);
 
-  private void _setHost(IZoomAndPanHost? host) {
-    if (_host == host) return;
-    
-    if (_host != null) {
-      _host.HostMouseDownEvent -= _onHostMouseDown;
-      _host.HostMouseMoveEvent -= _onHostMouseMove;
-      _host.HostMouseUpEvent -= _onHostMouseUp;
-      _host.HostMouseWheelEvent -= _onHostMouseWheel;
-      _host.HostSizeChangedEvent -= _onHostSizeChanged;
+  public void SetHostSize(double w, double h) {
+    HostWidth = w;
+    HostHeight = h;
+    _updateLayout();
+  }
+
+  public void SetContentSize(double w, double h) {
+    ContentWidth = w;
+    ContentHeight = h;
+    _updateLayout();
+    OnPropertyChanged(nameof(ContentWidth));
+    OnPropertyChanged(nameof(ContentHeight));
+  }
+
+  private void _updateLayout() {
+    if (!_hostHaveSize() || ContentWidth == 0 || ContentHeight == 0) return;
+
+    _zoomStateIndex = 0;
+    _baseScale = GetFitScale();
+    _userScale = 1.0;
+    _setScale(_baseScale);
+
+    var visibleW = ContentWidth * ScaleX;
+    var visibleH = ContentHeight * ScaleY;
+
+    TransformX = (HostWidth - visibleW) / 2;
+    TransformY = (HostHeight - visibleH) / 2;
+
+    IsZoomed = false;
+  }
+
+  private bool _hostHaveSize() =>
+    HostWidth > 0 && HostHeight > 0;
+  
+  private bool _isContentSmaller() =>
+    ContentWidth < HostWidth && ContentHeight < HostHeight;
+
+  private void _setUserScale(double scale, PointD hostPos) {
+    var minScale = 1.0;
+    var maxScale = 3.0 / _baseScale;
+    _userScale = Math.Clamp(scale, minScale, maxScale);
+    _applyScale(_baseScale * _userScale, hostPos);
+  }
+
+  private void _setBaseScale(double scale, PointD hostPos) {
+    _baseScale = scale;
+    _userScale = 1.0;
+    _applyScale(scale, hostPos);
+  }
+
+  private void _applyScale(double scale, PointD hostPos) {
+    var contentX = (hostPos.X - TransformX) / ScaleX;
+    var contentY = (hostPos.Y - TransformY) / ScaleY;
+    _setScale(scale);
+    TransformX = hostPos.X - contentX * scale;
+    TransformY = hostPos.Y - contentY * scale;
+    _applyPanLimits();
+  }
+
+  private void _setScale(double scale) {
+    _scale = scale;
+    OnPropertyChanged(nameof(ScaleX));
+    OnPropertyChanged(nameof(ScaleY));
+    OnPropertyChanged(nameof(ActualZoom));
+  }
+
+  public double GetFitScale() {
+    var (fit, _) = _getFitFill();
+    return (_isContentSmaller() && !ExpandToFill) ? 1.0 : fit;
+  }
+
+  private void _applyPanLimits() {
+    if (!_hostHaveSize()) return;
+
+    var visibleW = ContentWidth * ScaleX;
+    var visibleH = ContentHeight * ScaleY;
+
+    if (visibleW <= HostWidth) {
+      TransformX = (HostWidth - visibleW) / 2;
+    }
+    else {
+      var minX = HostWidth - visibleW;
+      var maxX = 0.0;
+
+      if (TransformX < minX) TransformX = minX;
+      if (TransformX > maxX) TransformX = maxX;
     }
 
-    _host = host;
-    if (_host == null) return;
+    if (visibleH <= HostHeight) {
+      TransformY = (HostHeight - visibleH) / 2;
+    }
+    else {
+      var minY = HostHeight - visibleH;
+      var maxY = 0.0;
 
-    _host.HostMouseDownEvent += _onHostMouseDown;
-    _host.HostMouseMoveEvent += _onHostMouseMove;
-    _host.HostMouseUpEvent += _onHostMouseUp;
-    _host.HostMouseWheelEvent += _onHostMouseWheel;
-    _host.HostSizeChangedEvent += _onHostSizeChanged;
-  } 
+      if (TransformY < minY) TransformY = minY;
+      if (TransformY > maxY) TransformY = maxY;
+    }
+  }
 
-  private void _setScale(double scale, double relativeX, double relativeY) {
-    if (scale < _getMinScale()) {
-      ScaleToFit();
+  public void PointerDown(PointD hostPos) {
+    _raiseContentMouseDown();
+    _startX = hostPos.X;
+    _startY = hostPos.Y;
+    _originX = TransformX;
+    _originY = TransformY;
+    _isPanning = true;
+  }
+
+  public void PointerMove(PointD hostPos) {
+    if (!_isPanning) return;
+
+    TransformX = _originX + (hostPos.X - _startX);
+    TransformY = _originY + (hostPos.Y - _startY);
+
+    _applyPanLimits();
+  }
+
+  public void PointerUp() {
+    _isPanning = false;
+    if (!IsZoomed) _updateLayout();
+  }
+
+  public void Zoom(double factor, PointD hostPos) {
+    IsZoomed = true;
+    _setUserScale(_userScale * factor, hostPos);
+  }
+
+  public void ZoomToFinalScale(double scale, PointD hostPos) =>
+    _setUserScale(scale / _baseScale, hostPos);
+
+  public void ToggleZoom(PointD hostPos) {
+    if (ContentWidth == 0 || ContentHeight == 0) return;
+
+    if (_userScale != 1.0) {
+      _updateLayout();
       return;
     }
 
-    var absoluteX = (relativeX * _scaleX) + _transformX;
-    var absoluteY = (relativeY * _scaleY) + _transformY;
-    ScaleX = scale;
-    ScaleY = scale;
-    TransformX = absoluteX - (relativeX * _scaleX);
-    TransformY = absoluteY - (relativeY * _scaleY);
-    OnPropertyChanged(nameof(ActualZoom));
+    var states = _getZoomStates();
+    _zoomStateIndex = (_zoomStateIndex + 1) % states.Length;
+    var targetFinal = states[_zoomStateIndex];
+    _setBaseScale(targetFinal, hostPos);
+
+    IsZoomed =
+      ContentWidth * ScaleX > HostWidth + 0.5 ||
+      ContentHeight * ScaleY > HostHeight + 0.5;
   }
 
-  private double _getMinScale() =>
-    Host == null ? 1.0 : GetFitScale(Host.Width, Host.Height, _contentWidth, _contentHeight);
+  private double[] _getZoomStates() {
+    var (fit, fill) = _getFitFill();
+    var one = 1.0;
 
-  public void ScaleToFit() {
-    if (Host == null) return;
-    var scale = GetFitScale(Host.Width, Host.Height, _contentWidth, _contentHeight);
-    ScaleX = scale;
-    ScaleY = scale;
-    TransformX = (Host.Width - (_contentWidth * scale)) / 2;
-    TransformY = (Host.Height - (_contentHeight * scale)) / 2;
-    IsZoomed = false;
-    OnPropertyChanged(nameof(ActualZoom));
+    if (_isContentSmaller())
+      return ExpandToFill
+        ? new[] { fit, one }
+        : new[] { one, fit };
+
+    if (Math.Abs(fill - one) < 0.0001)
+      return new[] { fit, one };
+
+    return new[] { fit, fill, one };
   }
 
-  public void ScaleToFitContent(double width, double height) {
-    ContentWidth = width;
-    ContentHeight = height;
-    ScaleToFit();
-  }
-
-  public double GetFitScale(double hostW, double hostH, double imgW, double imgH) {
-    var scaleW = hostW / imgW;
-    var scaleH = hostH / imgH;
+  private (double fit, double fill) _getFitFill() {
+    var scaleW = HostWidth / ContentWidth;
+    var scaleH = HostHeight / ContentHeight;
 
     var fit = Math.Min(scaleW, scaleH);
+    var fill = Math.Min(Math.Max(scaleW, scaleH), 1.0);
 
-    var isSmaller = imgW < hostW && imgH < hostH;
-    var isBigger = imgW > hostW || imgH > hostH;
-
-    if (isSmaller && !_expandToFill) return 1.0;
-    if (isBigger && !_shrinkToFill) return 1.0;
-
-    return fit;
+    return (fit, fill);
   }
 
+  public bool IsContentPanoramic() =>
+    _hostHaveSize() && ContentWidth / (ContentHeight / HostHeight) > HostWidth;
+
   public bool CanStartAnimation() {
-    if (Host == null) return false;
-    var horizontal = Host.Height / _contentHeight * _contentWidth > Host.Width;
+    if (!_hostHaveSize()) return false;
+    var horizontal = HostHeight / ContentHeight * ContentWidth > HostWidth;
     var isBigger = horizontal
-      ? Host.Width < _contentWidth / _scaleX
-      : Host.Height < _contentHeight / _scaleY;
+      ? HostWidth < ContentWidth / ScaleX
+      : HostHeight < ContentHeight / ScaleY;
     if (!isBigger) return false;
-    var goodRatio = (Host.Width / Host.Height) + 0.8 < _contentWidth / _contentHeight;
+    var goodRatio = (HostWidth / HostHeight) + 0.8 < ContentWidth / ContentHeight;
     return goodRatio;
   }
 
   public void StartAnimation(int minDuration) {
-    if (Host == null) { _raiseAnimationEnded(); return; }
-    var horizontal = Host.Height / _contentHeight * _contentWidth > Host.Width;
-    var scale = horizontal
-      ? Host.Height / _contentHeight
-      : Host.Width / _contentWidth;
+    if (Host == null || !_hostHaveSize()) {
+      _raiseAnimationEnded();
+      return;
+    }
 
-    if (scale > 1) scale = 1;
+    var horizontal = HostHeight / ContentHeight * ContentWidth > HostWidth;
 
-    var toValue = horizontal
-      ? ((_contentWidth * scale) - Host.Width) * -1
-      : ((_contentHeight * scale) - Host.Height) * -1;
+    var finalScale = horizontal ? HostHeight / ContentHeight : HostWidth / ContentWidth;
+    if (finalScale > 1) finalScale = 1;
+    var userScale = finalScale / _baseScale;
+    _setUserScale(userScale, new PointD(HostWidth / 2, HostHeight / 2));
 
-    _setScale(scale, _contentWidth / 2, _contentHeight / 2);
-
-    var duration = toValue * 10 * -1 > minDuration
-      ? toValue * 10 * -1
-      : minDuration;
+    var visibleW = ContentWidth * ScaleX;
+    var visibleH = ContentHeight * ScaleY;
+    var toValue = horizontal ? (visibleW - HostWidth) * -1 : (visibleH - HostHeight) * -1;
+    var duration = Math.Max(Math.Abs(toValue) * 10, minDuration);
 
     IsAnimationOn = true;
+
     Host.StartAnimation(toValue, duration, horizontal, () => _onAnimationCompleted(toValue, horizontal));
   }
 
   private void _onAnimationCompleted(double toValue, bool horizontal) {
-    if (!_isAnimationOn) return;
+    if (!IsAnimationOn) return;
 
     if (horizontal)
       TransformX = toValue;
@@ -175,80 +272,8 @@ public class ZoomAndPan : ObservableObject {
   }
 
   public void StopAnimation() {
-    if (!_isAnimationOn) return;
+    if (!IsAnimationOn) return;
     IsAnimationOn = false;
     Host?.StopAnimation();
   }
-
-  private void _onHostSizeChanged(object? o, EventArgs e) =>
-    ScaleToFit();
-
-  private void _onHostMouseMove(object? o, PointD hostPos) {
-    TransformX = _originX - (_startX - hostPos.X);
-    TransformY = _originY - (_startY - hostPos.Y);
-    _applyPanLimits();
-  }
-
-  private void _applyPanLimits() {
-    if (Host == null) return;
-
-    var visibleW = _contentWidth * _scaleX;
-    var visibleH = _contentHeight * _scaleY;
-
-    if (visibleW > Host.Width) {
-      var minX = Host.Width - visibleW;
-      var maxX = 0.0;
-      if (TransformX < minX) TransformX = minX;
-      if (TransformX > maxX) TransformX = maxX;
-    }
-    else {
-      TransformX = (Host.Width - visibleW) / 2;
-    }
-
-    if (visibleH > Host.Height) {
-      var minY = Host.Height - visibleH;
-      var maxY = 0.0;
-      if (TransformY < minY) TransformY = minY;
-      if (TransformY > maxY) TransformY = maxY;
-    }
-    else {
-      TransformY = (Host.Height - visibleH) / 2;
-    }
-  }
-
-  private void _onHostMouseDown(object? o, (PointD host, PointD content) pos) {
-    _raiseContentMouseDown();
-
-    if (!_isZoomed && System.OperatingSystem.IsWindows())
-      _setScale(1, pos.content.X, pos.content.Y);
-
-    _startX = pos.host.X;
-    _startY = pos.host.Y;
-    _originX = _transformX;
-    _originY = _transformY;
-  }
-
-  private void _onHostMouseUp(object? o, EventArgs e) {
-    if (!_isZoomed)
-      ScaleToFit();
-  }
-
-  private void _onHostMouseWheel(object? o, (int delta, PointD contentPos) e) {
-    if (!Keyboard.IsCtrlOn() || (!(e.delta > 0) && (_scaleX < .2 || _scaleY < .2))) return;
-
-    IsZoomed = true;
-    var scale = _scaleX + (e.delta > 0 ? .1 : -.1);
-    _setScale(scale, e.contentPos.X, e.contentPos.Y);
-  }
-
-  public void Zoom(double scale, PointD pos) {
-    if (scale < .1) return;
-    IsZoomed = true;
-    var x = (pos.X - _transformX) / _scaleX;
-    var y = (pos.Y - _transformY) / _scaleY;
-    _setScale(scale, x, y);
-  }
-
-  public bool IsContentPanoramic() =>
-    Host != null && ContentWidth / (ContentHeight / Host.Height) > Host.Width;
 }
