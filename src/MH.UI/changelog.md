@@ -2,6 +2,7 @@
 	- [N] TabControl: NoTabsText
 	- [C] Dialog: Result
 	- [U] ZoomAndPan: Rewrite, ShrinkToFill removed
+	- [U] ZoomAndPan: IsOverflowing prop, Scaling, ZoomTo100 method
 
 4.3.0:
 	- [U] CollectionView: ReWrapAll after Reload
