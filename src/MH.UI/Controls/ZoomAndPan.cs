@@ -11,6 +11,7 @@ public interface IZoomAndPanHost {
 
 public class ZoomAndPan : ObservableObject {
   private bool _isPanning;
+  private bool _is100Zoom;
   private double _startX;
   private double _startY;
   private double _originX;
@@ -23,7 +24,6 @@ public class ZoomAndPan : ObservableObject {
   private double _transformY;
   private bool _isAnimationOn;
   private bool _expandToFill;
-  private bool _isZoomed;
   private int _zoomStateIndex = 0;
   private IZoomAndPanHost? _host;
 
@@ -38,7 +38,8 @@ public class ZoomAndPan : ObservableObject {
   public double ContentHeight { get; private set; }
   public bool IsAnimationOn { get => _isAnimationOn; private set { _isAnimationOn = value; OnPropertyChanged(); } }
   public bool ExpandToFill { get => _expandToFill; set { _expandToFill = value; OnPropertyChanged(); _updateLayout(); } }
-  public bool IsZoomed { get => _isZoomed; private set { _isZoomed = value; OnPropertyChanged(); } }
+  public bool IsZoomed { get; private set; }
+  public bool IsOverflowing { get; private set; }
   public double ActualZoom => ScaleX * 100;
 
   public event EventHandler? AnimationEndedEvent;
@@ -75,20 +76,43 @@ public class ZoomAndPan : ObservableObject {
     TransformX = (HostWidth - visibleW) / 2;
     TransformY = (HostHeight - visibleH) / 2;
 
-    IsZoomed = false;
+    _updateStates();
   }
 
   private bool _hostHaveSize() =>
     HostWidth > 0 && HostHeight > 0;
-  
+
   private bool _isContentSmaller() =>
-    ContentWidth < HostWidth && ContentHeight < HostHeight;
+    ContentWidth <= HostWidth && ContentHeight <= HostHeight;
+
+  private void _updateStates() {
+    IsOverflowing =
+      ContentWidth * ScaleX > HostWidth + 0.5 ||
+      ContentHeight * ScaleY > HostHeight + 0.5;
+    OnPropertyChanged(nameof(IsOverflowing));
+
+    var fit = GetFitScale();
+
+    IsZoomed =
+      Math.Abs(_userScale - 1.0) > 0.0001 ||
+      Math.Abs(_baseScale - fit) > 0.0001;
+    OnPropertyChanged(nameof(IsZoomed));
+  }
 
   private void _setUserScale(double scale, PointD hostPos) {
-    var minScale = 1.0;
-    var maxScale = 3.0 / _baseScale;
-    _userScale = Math.Clamp(scale, minScale, maxScale);
-    _applyScale(_baseScale * _userScale, hostPos);
+    double minScale, maxScale;
+    if (_isContentSmaller()) {
+      minScale = 1.0;
+      maxScale = Math.Max(_baseScale, 3.0);
+    }
+    else {
+      minScale = _baseScale;
+      maxScale = 3.0;
+    }
+
+    var finalScale = Math.Clamp(_baseScale * scale, minScale, maxScale);
+    _userScale = finalScale / _baseScale;
+    _applyScale(finalScale, hostPos);
   }
 
   private void _setBaseScale(double scale, PointD hostPos) {
@@ -104,6 +128,7 @@ public class ZoomAndPan : ObservableObject {
     TransformX = hostPos.X - contentX * scale;
     TransformY = hostPos.Y - contentY * scale;
     _applyPanLimits();
+    _updateStates();
   }
 
   private void _setScale(double scale) {
@@ -167,12 +192,20 @@ public class ZoomAndPan : ObservableObject {
 
   public void PointerUp() {
     _isPanning = false;
-    if (!IsZoomed) _updateLayout();
+
+    if (_is100Zoom) {
+      _is100Zoom = false;
+      _updateLayout();
+    }
   }
 
-  public void Zoom(double factor, PointD hostPos) {
-    IsZoomed = true;
+  public void Zoom(double factor, PointD hostPos) =>
     _setUserScale(_userScale * factor, hostPos);
+
+  public void ZoomTo100(PointD hostPos) {
+    if (IsZoomed) return;
+    _is100Zoom = true;
+    ZoomToFinalScale(1.0, hostPos);
   }
 
   public void ZoomToFinalScale(double scale, PointD hostPos) =>
@@ -190,10 +223,6 @@ public class ZoomAndPan : ObservableObject {
     _zoomStateIndex = (_zoomStateIndex + 1) % states.Length;
     var targetFinal = states[_zoomStateIndex];
     _setBaseScale(targetFinal, hostPos);
-
-    IsZoomed =
-      ContentWidth * ScaleX > HostWidth + 0.5 ||
-      ContentHeight * ScaleY > HostHeight + 0.5;
   }
 
   private double[] _getZoomStates() {
