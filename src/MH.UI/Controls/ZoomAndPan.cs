@@ -30,8 +30,8 @@ public class ZoomAndPan : ObservableObject {
   public IZoomAndPanHost? Host { get => _host; set => _host = value; }
   public double ScaleX => _scale;
   public double ScaleY => _scale;
-  public double TransformX { get => _transformX; set { _transformX = value; OnPropertyChanged(); } }
-  public double TransformY { get => _transformY; set { _transformY = value; OnPropertyChanged(); } }
+  public double TransformX { get => _transformX; private set { _transformX = value; OnPropertyChanged(); } }
+  public double TransformY { get => _transformY; private set { _transformY = value; OnPropertyChanged(); } }
   public double HostWidth { get; private set; }
   public double HostHeight { get; private set; }
   public double ContentWidth { get; private set; }
@@ -44,9 +44,11 @@ public class ZoomAndPan : ObservableObject {
 
   public event EventHandler? AnimationEndedEvent;
   public event EventHandler? ContentMouseDownEvent;
+  public event EventHandler? ViewportChangedEvent;
 
   private void _raiseAnimationEnded() => AnimationEndedEvent?.Invoke(this, EventArgs.Empty);
   private void _raiseContentMouseDown() => ContentMouseDownEvent?.Invoke(this, EventArgs.Empty);
+  private void _raiseViewportChanged() => ViewportChangedEvent?.Invoke(this, EventArgs.Empty);
 
   public void SetHostSize(double w, double h) {
     HostWidth = w;
@@ -77,6 +79,7 @@ public class ZoomAndPan : ObservableObject {
     TransformY = (HostHeight - visibleH) / 2;
 
     _updateStates();
+    _raiseViewportChanged();
   }
 
   private bool _hostHaveSize() =>
@@ -129,6 +132,7 @@ public class ZoomAndPan : ObservableObject {
     TransformY = hostPos.Y - contentY * scale;
     _applyPanLimits();
     _updateStates();
+    _raiseViewportChanged();
   }
 
   private void _setScale(double scale) {
@@ -188,6 +192,7 @@ public class ZoomAndPan : ObservableObject {
     TransformY = _originY + (hostPos.Y - _startY);
 
     _applyPanLimits();
+    _raiseViewportChanged();
   }
 
   public void PointerUp() {
