@@ -1,9 +1,11 @@
-4.4.0:
+5.0.0:
 	- [N] TabControl: NoTabsText
 	- [C] Dialog: Result
 	- [U] ZoomAndPan: Rewrite, ShrinkToFill removed
 	- [U] ZoomAndPan: IsOverflowing prop, Scaling, ZoomTo100 method
 	- [U] ZoomAndPan: ViewportChanged event
+	- [N] Transform2D struct
+	- [N] ZoomAndPan: GetViewportTransform and GetFitViewportTransform methods
 
 4.3.0:
 	- [U] CollectionView: ReWrapAll after Reload
