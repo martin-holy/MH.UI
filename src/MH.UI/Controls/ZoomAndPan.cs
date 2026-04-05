@@ -1,4 +1,5 @@
-﻿using MH.Utils.BaseClasses;
+﻿using MH.UI.Primitives;
+using MH.Utils.BaseClasses;
 using MH.Utils.Types;
 using System;
 
@@ -257,6 +258,18 @@ public class ZoomAndPan : ObservableObject {
 
   public bool IsContentPanoramic() =>
     _hostHaveSize() && ContentWidth / (ContentHeight / HostHeight) > HostWidth;
+
+  public Transform2D GetViewportTransform() =>
+    new((float)ScaleX, (float)ScaleY, (float)TransformX, (float)TransformY);
+
+  public Transform2D GetFitViewportTransform(double width, double height) {
+    var scale = GetFitScale();
+    var ratio = scale * (ContentWidth / width);
+    var tx = (HostWidth - (width * ratio)) / 2;
+    var ty = (HostHeight - (height * ratio)) / 2;
+
+    return new((float)ratio, (float)ratio, (float)tx, (float)ty);
+  }
 
   public bool CanStartAnimation() {
     if (!_hostHaveSize()) return false;
