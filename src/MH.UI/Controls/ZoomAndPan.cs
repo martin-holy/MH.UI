@@ -51,6 +51,9 @@ public class ZoomAndPan : ObservableObject {
   private void _raiseContentMouseDown() => ContentMouseDownEvent?.Invoke(this, EventArgs.Empty);
   private void _raiseViewportChanged() => ViewportChangedEvent?.Invoke(this, EventArgs.Empty);
 
+  public ViewportState GetViewportState() =>
+    new((float)ScaleX, (float)ScaleY, (float)TransformX, (float)TransformY, ContentWidth, ContentHeight, HostWidth, HostHeight);
+
   public void SetHostSize(double w, double h) {
     HostWidth = w;
     HostHeight = h;
