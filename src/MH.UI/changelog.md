@@ -4,8 +4,8 @@
 	- [U] ZoomAndPan: Rewrite, ShrinkToFill removed
 	- [U] ZoomAndPan: IsOverflowing prop, Scaling, ZoomTo100 method
 	- [U] ZoomAndPan: ViewportChanged event
-	- [N] Transform2D struct
-	- [N] ZoomAndPan: GetViewportTransform and GetFitViewportTransform methods
+	- [N] ZoomAndPan: GetViewportState
+	- [N] ViewportState struct
 
 4.3.0:
 	- [U] CollectionView: ReWrapAll after Reload
