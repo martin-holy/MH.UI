@@ -441,7 +441,6 @@ public sealed class MediaPlayer : ObservableObject {
   public void SetView(IPlatformSpecificUiMediaPlayer? view) {
     if (_uiPlayer != null) {
       _uiPlayer.Pause();
-      _uiPlayer.Source = null;
       _uiPlayer.ViewModel = null;
     }
 
@@ -451,7 +450,7 @@ public sealed class MediaPlayer : ObservableObject {
     view.SpeedRatio = _speed;
     view.Volume = _volume;
     view.IsMuted = _isMuted;
-    if (!string.IsNullOrEmpty(_source))
-      view.Source = new(_source);
+
+    if (_isPlaying) view.Play();
   }
 }
