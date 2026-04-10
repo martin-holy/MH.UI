@@ -6,6 +6,7 @@
 	- [U] ZoomAndPan: ViewportChanged event
 	- [N] ZoomAndPan: GetViewportState
 	- [N] ViewportState struct
+	- [U] MediaPlayer: uiPlayer source not set in SetView
 
 4.3.0:
 	- [U] CollectionView: ReWrapAll after Reload
