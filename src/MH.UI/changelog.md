@@ -7,6 +7,7 @@
 	- [N] ZoomAndPan: GetViewportState
 	- [N] ViewportState struct
 	- [U] MediaPlayer: uiPlayer source not set in SetView
+	- [U] Res: TimelineShift icon names without dot
 
 4.3.0:
 	- [U] CollectionView: ReWrapAll after Reload
