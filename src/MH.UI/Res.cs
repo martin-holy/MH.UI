@@ -20,11 +20,11 @@ public static class Res {
   public const string IconSmallDot = "IconSmallDot";
   public const string IconSort = "IconSort";
   public const string IconStop = "IconStop";
-  public const string IconTimelineShiftBeginning = "IconTimelineShift.Beginning";
-  public const string IconTimelineShiftEnd = "IconTimelineShift.End";
-  public const string IconTimelineShiftLargeBack = "IconTimelineShift.LargeBack";
-  public const string IconTimelineShiftLargeForward = "IconTimelineShift.LargeForward";
-  public const string IconTimelineShiftSmallBack = "IconTimelineShift.SmallBack";
-  public const string IconTimelineShiftSmallForward = "IconTimelineShift.SmallForward";
+  public const string IconTimelineShiftBeginning = "IconTimelineShiftBeginning";
+  public const string IconTimelineShiftEnd = "IconTimelineShiftEnd";
+  public const string IconTimelineShiftLargeBack = "IconTimelineShiftLargeBack";
+  public const string IconTimelineShiftLargeForward = "IconTimelineShiftLargeForward";
+  public const string IconTimelineShiftSmallBack = "IconTimelineShiftSmallBack";
+  public const string IconTimelineShiftSmallForward = "IconTimelineShiftSmallForward";
   public const string IconXCross = "IconXCross";
 }
