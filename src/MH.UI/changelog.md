@@ -9,6 +9,9 @@
 	- [U] MediaPlayer: uiPlayer source not set in SetView
 	- [U] Res: TimelineShift icon names without dot
 	- [U] Dialog: Reset Result before show
+	- [N] ValueSelectorBase
+	- [N] ValueSelector
+	- [N] RangeSelector
 
 4.3.0:
 	- [U] CollectionView: ReWrapAll after Reload
