@@ -12,6 +12,7 @@
 	- [N] ValueSelectorBase
 	- [N] ValueSelector
 	- [N] RangeSelector
+	- [U] MediaPlayer: Set Position in SetView
 
 4.3.0:
 	- [U] CollectionView: ReWrapAll after Reload
