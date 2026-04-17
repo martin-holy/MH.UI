@@ -450,6 +450,7 @@ public sealed class MediaPlayer : ObservableObject {
     view.SpeedRatio = _speed;
     view.Volume = _volume;
     view.IsMuted = _isMuted;
+    view.Position = TimeSpan.FromMilliseconds((int)_timelinePosition);
 
     if (_isPlaying) view.Play();
   }
