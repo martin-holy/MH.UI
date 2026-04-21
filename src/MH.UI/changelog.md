@@ -6,13 +6,14 @@
 	- [U] ZoomAndPan: ViewportChanged event
 	- [N] ZoomAndPan: GetViewportState
 	- [N] ViewportState struct
-	- [U] MediaPlayer: uiPlayer source not set in SetView
 	- [U] Res: TimelineShift icon names without dot
 	- [U] Dialog: Reset Result before show
 	- [N] ValueSelectorBase
 	- [N] ValueSelector
 	- [N] RangeSelector
-	- [U] MediaPlayer: Set Position in SetView
+	- [U] IPlatformSpecificUiMediaPlayer renamed to IUiMediaPlayer
+	- [N] MediaPlayer MediaOpenedEvent
+	- [C] MediaPlayer refactoring
 
 4.3.0:
 	- [U] CollectionView: ReWrapAll after Reload
