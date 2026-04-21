@@ -3,7 +3,7 @@ using MH.UI.Controls;
 
 namespace MH.UI.Interfaces;
 
-public interface IPlatformSpecificUiMediaPlayer {
+public interface IUiMediaPlayer {
   public MediaPlayer? ViewModel { get; set; }
   public double SpeedRatio { get; set; }
   public double Volume { get; set; }
