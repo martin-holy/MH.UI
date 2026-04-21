@@ -16,7 +16,7 @@ public sealed class MediaPlayer : ObservableObject {
 
   private const string _zeroTime = "00:00:00";
 
-  private IPlatformSpecificUiMediaPlayer? _uiPlayer;
+  private IUiMediaPlayer? _uiPlayer;
   private readonly Timer _clipTimer;
   private readonly Timer _timelineTimer;
   private IVideoItem? _currentItem;
@@ -99,16 +99,17 @@ public sealed class MediaPlayer : ObservableObject {
   public string Source {
     get => _source;
     set {
-      _source = value;
-      SetCurrent(null);
+      if (!_setIfVary(ref _source, value)) return;
 
-      if (string.IsNullOrEmpty(value)) {
-        if (_uiPlayer != null) _uiPlayer.Source = null;
-        IsPlaying = false;
-        TimelineMaximum = 0;
-      }
-      else if (_uiPlayer != null)
-        _uiPlayer.Source = new(Source);
+      IsPlaying = false;
+      SetCurrent(null);
+      TimelinePosition = 0;
+      TimelineMaximum = 0;
+
+      if (_uiPlayer != null)
+        _uiPlayer.Source = string.IsNullOrEmpty(_source)
+          ? null
+          : new(_source);
 
       OnPropertyChanged();
     }
@@ -127,6 +128,8 @@ public sealed class MediaPlayer : ObservableObject {
   public bool IsPlaying {
     get => _isPlaying;
     set {
+      if (!_setIfVary(ref _isPlaying, value)) return;
+
       if (value) {
         _uiPlayer?.Play();
         _startClipTimer();
@@ -138,7 +141,6 @@ public sealed class MediaPlayer : ObservableObject {
         _timelineTimer.Stop();
       }
 
-      _isPlaying = value;
       OnPropertyChanged();
     }
   }
@@ -177,6 +179,7 @@ public sealed class MediaPlayer : ObservableObject {
   public Action? OnItemDeleteAction { get; set; }
 
   public event EventHandler<Tuple<IVideoItem, bool>>? MarkerSetEvent;
+  public event EventHandler? MediaOpenedEvent;
   public event EventHandler? MediaEndedEvent;
 
   public MediaPlayer() {
@@ -211,6 +214,7 @@ public sealed class MediaPlayer : ObservableObject {
   }
 
   private void _raiseMarkerSet(Tuple<IVideoItem, bool> args) => MarkerSetEvent?.Invoke(this, args);
+  private void _raiseMediaOpened() => MediaOpenedEvent?.Invoke(this, EventArgs.Empty);
   private void _raiseMediaEnded() => MediaEndedEvent?.Invoke(this, EventArgs.Empty);
 
   private void _timelineSliderValueChanged(PropertyChangedEventArgs<double>? value) {
@@ -234,13 +238,7 @@ public sealed class MediaPlayer : ObservableObject {
 
   public void OnMediaOpened(int duration) {
     TimelineMaximum = duration > 1000 ? duration : 1000;
-    IsPlaying = _autoPlay;
-
-    if (!_autoPlay) {
-      _uiPlayer?.Play();
-      _uiPlayer?.Pause();
-      _shiftTimeline(TimelineShift.Beginning);
-    }
+    _raiseMediaOpened();
 
     if (_playType != MediaPlayType.Video)
       SelectNextItemAction?.Invoke(false, true);
@@ -438,20 +436,17 @@ public sealed class MediaPlayer : ObservableObject {
             ? @"m\:ss\.f"
             : @"s\.f\s");
 
-  public void SetView(IPlatformSpecificUiMediaPlayer? view) {
+  public void SetView(IUiMediaPlayer view) {
     if (_uiPlayer != null) {
       _uiPlayer.Pause();
       _uiPlayer.ViewModel = null;
     }
 
     _uiPlayer = view;
-    if (view == null) return;
     view.ViewModel = this;
     view.SpeedRatio = _speed;
     view.Volume = _volume;
     view.IsMuted = _isMuted;
     view.Position = TimeSpan.FromMilliseconds((int)_timelinePosition);
-
-    if (_isPlaying) view.Play();
   }
 }
