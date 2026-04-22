@@ -111,6 +111,7 @@ public sealed class MediaPlayer : ObservableObject {
           ? null
           : new(_source);
 
+      _updateSourceRelatedCommands();
       OnPropertyChanged();
     }
   }
@@ -190,19 +191,19 @@ public sealed class MediaPlayer : ObservableObject {
 
     DeleteItemCommand = new(_deleteItem, () => CurrentItem != null, Res.IconXCross, "Delete");
     PauseCommand = new(() => IsPlaying = false, Res.IconPause, "Pause");
-    PlayCommand = new(() => IsPlaying = true, Res.IconPlay, "Play");
+    PlayCommand = new(() => IsPlaying = true, _haveSource, Res.IconPlay, "Play");
     SeekToEndCommand = new(() => _seekTo(false), () => CurrentItem is IVideoClip, Res.IconChevronLeft, "Seek to end");
     SeekToStartCommand = new(() => _seekTo(true), () => CurrentItem != null, Res.IconChevronRight, "Seek to start");
     SetEndMarkerCommand = new(() => _setMarker(false), () => CurrentItem is IVideoClip, Res.IconChevronDown, "Set end");
-    SetNewClipCommand = new(_setNewClip, () => !string.IsNullOrEmpty(Source), Res.IconMovieClapper, "Create new or close video clip");
-    SetNewImageCommand = new(_setNewImage, () => !string.IsNullOrEmpty(Source), Res.IconImage, "Create new video image");
+    SetNewClipCommand = new(_setNewClip, _haveSource, Res.IconMovieClapper, "Create new or close video clip");
+    SetNewImageCommand = new(_setNewImage, _haveSource, Res.IconImage, "Create new video image");
     SetStartMarkerCommand = new(() => _setMarker(true), () => CurrentItem != null, Res.IconChevronDown, "Set start");
-    TimelineShiftBeginningCommand = new(() => _shiftTimeline(TimelineShift.Beginning), Res.IconTimelineShiftBeginning);
-    TimelineShiftEndCommand = new(() => _shiftTimeline(TimelineShift.End), Res.IconTimelineShiftEnd);
-    TimelineShiftLargeBackCommand = new(() => _shiftTimeline(TimelineShift.LargeBack), Res.IconTimelineShiftLargeBack);
-    TimelineShiftLargeForwardCommand = new(() => _shiftTimeline(TimelineShift.LargeForward), Res.IconTimelineShiftLargeForward);
-    TimelineShiftSmallBackCommand = new(() => _shiftTimeline(TimelineShift.SmallBack), Res.IconTimelineShiftSmallBack);
-    TimelineShiftSmallForwardCommand = new(() => _shiftTimeline(TimelineShift.SmallForward), Res.IconTimelineShiftSmallForward);
+    TimelineShiftBeginningCommand = new(() => _shiftTimeline(TimelineShift.Beginning), _haveSource, Res.IconTimelineShiftBeginning);
+    TimelineShiftEndCommand = new(() => _shiftTimeline(TimelineShift.End), _haveSource, Res.IconTimelineShiftEnd);
+    TimelineShiftLargeBackCommand = new(() => _shiftTimeline(TimelineShift.LargeBack), _haveSource, Res.IconTimelineShiftLargeBack);
+    TimelineShiftLargeForwardCommand = new(() => _shiftTimeline(TimelineShift.LargeForward), _haveSource, Res.IconTimelineShiftLargeForward);
+    TimelineShiftSmallBackCommand = new(() => _shiftTimeline(TimelineShift.SmallBack), _haveSource, Res.IconTimelineShiftSmallBack);
+    TimelineShiftSmallForwardCommand = new(() => _shiftTimeline(TimelineShift.SmallForward), _haveSource, Res.IconTimelineShiftSmallForward);
     TimelineSliderChangeEndedCommand = new(_timelineSliderChangeEnded);
     TimelineSliderChangeStartedCommand = new(_timelineSliderChangeStarted);
     TimelineSliderValueChangedCommand = new(_timelineSliderValueChanged);
@@ -448,5 +449,20 @@ public sealed class MediaPlayer : ObservableObject {
     view.Volume = _volume;
     view.IsMuted = _isMuted;
     view.Position = TimeSpan.FromMilliseconds((int)_timelinePosition);
+  }
+
+  private bool _haveSource() =>
+    !string.IsNullOrEmpty(_source);
+
+  private void _updateSourceRelatedCommands() {
+    PlayCommand.RaiseCanExecuteChanged();
+    SetNewClipCommand.RaiseCanExecuteChanged();
+    SetNewImageCommand.RaiseCanExecuteChanged();
+    TimelineShiftBeginningCommand.RaiseCanExecuteChanged();
+    TimelineShiftEndCommand.RaiseCanExecuteChanged();
+    TimelineShiftLargeBackCommand.RaiseCanExecuteChanged();
+    TimelineShiftLargeForwardCommand.RaiseCanExecuteChanged();
+    TimelineShiftSmallBackCommand.RaiseCanExecuteChanged();
+    TimelineShiftSmallForwardCommand.RaiseCanExecuteChanged();
   }
 }
