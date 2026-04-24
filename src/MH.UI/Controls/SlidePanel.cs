@@ -29,13 +29,12 @@ public class SlidePanel : ObservableObject {
   public bool CanOpen { get => _canOpen; set { _canOpen = value; _onCanOpenChanged(); } }
   public bool IsOpen { get => _isOpen; set => _setIsOpen(value); }
   public bool IsPinned { get => _isPinned; set => _setIsPinned(value); }
-  public double Size { get => _size; private set { _size = value; OnPropertyChanged(); } }
+  public double Size { get => _size; set { _size = value; OnPropertyChanged(); } }
   public double GridSize { get => _gridSize; set => _setGridSize(value); }
 
-  public SlidePanel(Dock dock, object content, double size) {
+  public SlidePanel(Dock dock, object content) {
     Dock = dock;
     Content = content;
-    Size = size;
   }
 
   private void _onCanOpenChanged() =>
