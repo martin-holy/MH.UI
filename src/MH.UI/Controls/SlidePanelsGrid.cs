@@ -14,7 +14,7 @@ public class SlidePanelsGrid : ObservableObject {
   private int _activeLayout;
 
   public ISlidePanelsGridHost? Host { get => _host; set => _setHost(value); }
-  public int ActiveLayout { get => _activeLayout; set => _onActivateLayoutChanged(value); }
+  public int ActiveLayout { get => _activeLayout; set => _onActiveLayoutChanged(value); }
   public bool[][] PinLayouts { get; set; }
   public SlidePanel PanelLeft { get; }
   public SlidePanel PanelTop { get; }
@@ -46,7 +46,7 @@ public class SlidePanelsGrid : ObservableObject {
     };
   }
 
-  private void _onActivateLayoutChanged(int value) {
+  private void _onActiveLayoutChanged(int value) {
     _activeLayout = value;
     OnPropertyChanged(nameof(ActiveLayout));
     var activeLayout = PinLayouts[value];
