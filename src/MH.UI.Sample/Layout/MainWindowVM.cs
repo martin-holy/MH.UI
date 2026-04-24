@@ -67,10 +67,10 @@ public class MainWindowVM : ObservableObject {
   public MainWindowVM() {
     StatusBar = new();
     SlidePanelsGrid = new(
-      new(Dock.Left, LeftContent, 380),
-      new(Dock.Top, ToolBar, 30),
-      new(Dock.Right, RightContent, 200),
-      new(Dock.Bottom, StatusBar, 0),
+      new(Dock.Left, LeftContent) { Size = 380 },
+      new(Dock.Top, ToolBar) { Size = 30 },
+      new(Dock.Right, RightContent) { Size = 200 },
+      new(Dock.Bottom, StatusBar),
       MiddleContent,
       new[] { // Left, Top, Right, Bottom, FullScreen (not part of SlidePanelsGrid)
         new[] { false, true, false, true, false }, // browse mode
