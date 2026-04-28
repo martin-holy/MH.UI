@@ -71,12 +71,16 @@ public class MainWindowVM : ObservableObject {
       new(Dock.Top, ToolBar) { Size = 30 },
       new(Dock.Right, RightContent) { Size = 200 },
       new(Dock.Bottom, StatusBar),
-      MiddleContent,
-      new[] { // Left, Top, Right, Bottom, FullScreen (not part of SlidePanelsGrid)
-        new[] { false, true, false, true, false }, // browse mode
-        new[] { false, false, false, true, false } // view mode
-      });
-    
+      MiddleContent);
+
+    // Left, Top, Right, Bottom, FullScreen (FullScreen is not part of SlidePanelsGrid)
+    SlidePanelsGrid.PinLayouts = [ 
+      [false, true, false, true, false], // browse mode
+      [false, false, false, true, false] // view mode
+    ];
+
+    SlidePanelsGrid.ActiveLayout = 0;
+
     //SwitchToBrowserCommand = new(() => IsInViewMode = false, () => Core.VM.MediaViewer.IsVisible);
 
     OpenMessageDialogCommand = new(OpenMessageDialog, Icons.Bug, "Message Dialog");
