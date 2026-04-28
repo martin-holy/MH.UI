@@ -1,66 +1,60 @@
 ﻿using MH.Utils.BaseClasses;
-using MH.Utils.EventsArgs;
-using MH.Utils.Types;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MH.UI.Controls;
 
 public sealed class SlidePanelPinButton;
 
-public interface ISlidePanelHost {
-  public event EventHandler<SizeChangedEventArgs>? HostSizeChangedEvent;
-  public void OpenAnimation();
-  public void CloseAnimation();
-  public void UpdateOpenAnimation(ThicknessD from, ThicknessD to, TimeSpan duration);
-  public void UpdateCloseAnimation(ThicknessD from, ThicknessD to, TimeSpan duration);
-}
-
 public class SlidePanel : ObservableObject {
-  private ISlidePanelHost? _host;
   private bool _canOpen = true;
   private bool _isOpen;
   private bool _isPinned;
   private double _size;
   private double _gridSize;
+  private int _autoCloseDelay;
+  private CancellationTokenSource? _autoCloseCts;
 
-  public ISlidePanelHost? Host { get => _host; set => _setHost(value); }
   public object Content { get; }
   public Dock Dock { get; }
-  public bool CanOpen { get => _canOpen; set { _canOpen = value; _onCanOpenChanged(); } }
+  public bool CanOpen { get => _canOpen; set => _setCanOpen(value); }
   public bool IsOpen { get => _isOpen; set => _setIsOpen(value); }
   public bool IsPinned { get => _isPinned; set => _setIsPinned(value); }
-  public double Size { get => _size; set { _size = value; OnPropertyChanged(); } }
+  public double Size { get => _size; set => _setSize(value); }
   public double GridSize { get => _gridSize; set => _setGridSize(value); }
+  public int AutoCloseDelay { get => _autoCloseDelay; set { _autoCloseCts?.Cancel(); _autoCloseDelay = value; } }
 
   public SlidePanel(Dock dock, object content) {
     Dock = dock;
     Content = content;
   }
 
-  private void _onCanOpenChanged() =>
+  private void _setCanOpen(bool value) {
+    if (!_setIfVary(ref _canOpen, value, nameof(CanOpen))) return;
     IsOpen = _canOpen && _isPinned;
+  }
 
   private void _setIsOpen(bool value) {
-    if (value.Equals(_isOpen)) return;
-    _isOpen = value;
+    if (!_setIfVary(ref _isOpen, value, nameof(IsOpen))) return;
     if (!_isOpen && _isPinned) IsPinned = false;
-    if (_isOpen) _host?.OpenAnimation(); else _host?.CloseAnimation();
-    OnPropertyChanged(nameof(IsOpen));
+    _autoClose();
   }
 
   private void _setIsPinned(bool value) {
-    if (value.Equals(_isPinned)) return;
-    _isPinned = value;
+    if (!_setIfVary(ref _isPinned, value, nameof(IsPinned))) return;
     _setGridSize();
-    OnPropertyChanged(nameof(IsPinned));
     IsOpen = _isPinned;
   }
 
+  private void _setSize(double value) {
+    if (value == 0) return;
+    _setIfVary(ref _size, value, nameof(Size));
+  }
+
   private void _setGridSize(double value) {
-    if (value.Equals(_gridSize)) return;
-    _gridSize = value;
-    if (value != 0 && !value.Equals(_size)) Size = value;
-    OnPropertyChanged(nameof(GridSize));
+    if (!_setIfVary(ref _gridSize, value, nameof(GridSize))) return;
+    Size = value;
   }
 
   private void _setGridSize() =>
@@ -72,47 +66,26 @@ public class SlidePanel : ObservableObject {
     else if (mouseOnEdge && _canOpen) IsOpen = true;
   }
 
-  private void _setHost(ISlidePanelHost? host) {
-    if (ReferenceEquals(_host, host)) return;
-    
-    if (_host != null)
-      _host.HostSizeChangedEvent -= _onHostSizeChanged;
+  public void TogglePinned() =>
+    IsPinned = !IsPinned;
 
-    _host = host;
-    if (_host == null) return;
+  private async void _autoClose() {
+    _cancelAutoCloseTimer();
 
-    _host.HostSizeChangedEvent += _onHostSizeChanged;
-  }
+    if (!_isOpen || AutoCloseDelay == 0 || IsPinned) return;
 
-  private void _onHostSizeChanged(object? sender, SizeChangedEventArgs e) {
-    _setGridSize();
-    _updateAnimations(e);
-  }
+    var cts = new CancellationTokenSource();
+    _autoCloseCts = cts;
 
-  private void _updateAnimations(SizeChangedEventArgs e) {
-    if (_host == null ||
-        (Dock is Dock.Top or Dock.Bottom && !e.HeightChanged) ||
-        (Dock is Dock.Left or Dock.Right && !e.WidthChanged))
-      return;
-
-    var size = _size * -1;
-    var duration = TimeSpan.FromMilliseconds(size * -1 * 0.7);
-    var openFrom = new ThicknessD(0);
-    var openTo = new ThicknessD(0);
-    var closeFrom = new ThicknessD(0);
-    var closeTo = new ThicknessD(0);
-
-    switch (Dock) {
-      case Dock.Left: openFrom.Left = size; closeTo.Left = size; break;
-      case Dock.Top: openFrom.Top = size; closeTo.Top = size; break;
-      case Dock.Right: openFrom.Right = size; closeTo.Right = size; break;
-      case Dock.Bottom: openFrom.Bottom = size; closeTo.Bottom = size; break;
-      default: throw new ArgumentOutOfRangeException();
+    try {
+      await Task.Delay(AutoCloseDelay, cts.Token);
+      if (!cts.IsCancellationRequested && !IsPinned) IsOpen = false;
     }
+    catch (TaskCanceledException) { }
+  }
 
-    _host.UpdateOpenAnimation(openFrom, openTo, duration);
-    _host.UpdateCloseAnimation(closeFrom, closeTo, duration);
-
-    if (!_isOpen) _host.CloseAnimation();
+  private void _cancelAutoCloseTimer() {
+    _autoCloseCts?.Cancel();
+    _autoCloseCts = null;
   }
 }
