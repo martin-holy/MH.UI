@@ -4,4 +4,4 @@ namespace MH.UI.Sample.Layout;
 
 public sealed class MiddleContentSlotVM;
 
-public sealed class MiddleContentVM() : TabControl(new(Dock.Left, Dock.Top, new MiddleContentSlotVM()) { RotationAngle = 270 });
+public sealed class MiddleContentVM() : TabControl(new(Dock.Left) { StartSlot = new MiddleContentSlotVM(), RotationAngle = 270 });
