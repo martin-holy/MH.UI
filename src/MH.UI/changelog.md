@@ -15,6 +15,7 @@
 	- [N] MediaPlayer MediaOpenedEvent
 	- [C] MediaPlayer refactoring
 	- [C] SlidePanelsGrid: refactoring
+	- [U] TabStrip: Slot replaced by StartSlot and EndSlot
 
 4.3.0:
 	- [U] CollectionView: ReWrapAll after Reload
