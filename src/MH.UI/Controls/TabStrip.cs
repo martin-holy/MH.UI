@@ -2,10 +2,10 @@
 
 namespace MH.UI.Controls;
 
-public sealed class TabStrip(Dock placement, Dock slotPlacement, object slot) : ObservableObject {
+public sealed class TabStrip(Dock placement) : ObservableObject {
   private Dock _placement = placement;
-  private Dock _slotPlacement = slotPlacement;
-  private object _slot = slot;
+  private object? _startSlot;
+  private object? _endSlot;
   private int _rotationAngle;
   private bool _justifyTabSize;
   private double _maxTabWidth;
@@ -14,8 +14,8 @@ public sealed class TabStrip(Dock placement, Dock slotPlacement, object slot) : 
   private IconTextVisibility _iconTextVisibility = IconTextVisibility.Both;
 
   public Dock Placement { get => _placement; set { _placement = value; OnPropertyChanged(); } }
-  public Dock SlotPlacement { get => _slotPlacement; set { _slotPlacement = value; OnPropertyChanged(); } }
-  public object Slot { get => _slot; set { _slot = value; OnPropertyChanged(); } }
+  public object? StartSlot { get => _startSlot; set { _startSlot = value; OnPropertyChanged(); } }
+  public object? EndSlot { get => _endSlot; set { _endSlot = value; OnPropertyChanged(); } }
   public int RotationAngle { get => _rotationAngle; set { _rotationAngle = value; OnPropertyChanged(); } }
   public bool JustifyTabSize { get => _justifyTabSize; set { _justifyTabSize = value; OnPropertyChanged(); } }
   public double MaxTabWidth { get => _maxTabWidth; set { _maxTabWidth = value; OnPropertyChanged(); } }
