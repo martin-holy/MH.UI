@@ -1,3 +1,6 @@
+5.0.1:
+	- [B] SlidePanel: Bottom panel docking
+
 5.0.0:
 	- [N] TabControl: NoTabsText
 	- [C] Dialog: Result
