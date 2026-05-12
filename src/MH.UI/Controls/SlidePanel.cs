@@ -49,7 +49,8 @@ public class SlidePanel : ObservableObject {
 
   private void _setSize(double value) {
     if (value == 0) return;
-    _setIfVary(ref _size, value, nameof(Size));
+    if (!_setIfVary(ref _size, value, nameof(Size))) return;
+    _setGridSize();
   }
 
   private void _setGridSize(double value) {
