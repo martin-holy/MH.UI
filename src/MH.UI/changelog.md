@@ -1,5 +1,7 @@
-5.0.1:
+5.1.0:
 	- [B] SlidePanel: Bottom panel docking
+	- [N] SlidePanel: LayoutMode IsOverlay
+	- [U] SlidePanelsGrid: PinLayouts replaced by Layouts
 
 5.0.0:
 	- [N] TabControl: NoTabsText
