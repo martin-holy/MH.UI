@@ -30,13 +30,14 @@ public class MainWindowVM : ObservableObject {
   public TextsVM Texts { get; } = new();
 
   public bool AreControlsEnabled { get => _areControlsEnabled; set { _areControlsEnabled = value; OnPropertyChanged(); } }
+  public bool[] FullScreenInLayout { get; set; } = [];
 
   public bool IsFullScreen {
     get => _isFullScreen;
     set {
       if (_isFullScreen == value) return;
       _isFullScreen = value;
-      SlidePanelsGrid.PinLayouts[SlidePanelsGrid.ActiveLayout][4] = value;
+      FullScreenInLayout[SlidePanelsGrid.ActiveLayout] = value;
       OnPropertyChanged();
     }
   }
@@ -46,7 +47,7 @@ public class MainWindowVM : ObservableObject {
     set {
       _isInViewMode = value;
       SlidePanelsGrid.ActiveLayout = value ? 1 : 0;
-      IsFullScreen = SlidePanelsGrid.PinLayouts[SlidePanelsGrid.ActiveLayout][4];
+      IsFullScreen = FullScreenInLayout[SlidePanelsGrid.ActiveLayout];
       OnPropertyChanged();
     }
   }
@@ -73,10 +74,10 @@ public class MainWindowVM : ObservableObject {
       new(Dock.Bottom, StatusBar),
       MiddleContent);
 
-    // Left, Top, Right, Bottom, FullScreen (FullScreen is not part of SlidePanelsGrid)
-    SlidePanelsGrid.PinLayouts = [ 
-      [false, true, false, true, false], // browse mode
-      [false, false, false, true, false] // view mode
+    // Left, Top, Right, Bottom
+    SlidePanelsGrid.Layouts = [
+      [SlidePanel.LayoutMode.None, SlidePanel.LayoutMode.Docked, SlidePanel.LayoutMode.None, SlidePanel.LayoutMode.Docked], // browse mode
+      [SlidePanel.LayoutMode.None, SlidePanel.LayoutMode.None, SlidePanel.LayoutMode.None, SlidePanel.LayoutMode.Docked] // view mode
     ];
 
     SlidePanelsGrid.ActiveLayout = 0;
