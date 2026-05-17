@@ -1,3 +1,6 @@
+5.1.1:
+	- [B] SlidePanelsGrid: Pinned/Overlay layouts
+
 5.1.0:
 	- [B] SlidePanel: Bottom panel docking
 	- [N] SlidePanel: LayoutMode IsOverlay
