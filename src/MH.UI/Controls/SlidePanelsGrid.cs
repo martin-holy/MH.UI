@@ -19,7 +19,7 @@ public class SlidePanelsGrid : ObservableObject {
   public SlidePanel PanelBottom { get; }
   public object PanelMiddle { get; }
 
-  public static RelayCommand<SlidePanel> PinCommand { get; } = new(x => x!.IsPinned = !x.IsPinned, x => x != null);
+  public static RelayCommand<SlidePanel> PinCommand { get; } = new(x => x!.TogglePinned(), x => x != null);
 
   public SlidePanelsGrid(SlidePanel left, SlidePanel top, SlidePanel right, SlidePanel bottom, object middle) {
     PanelLeft = left;
@@ -40,8 +40,8 @@ public class SlidePanelsGrid : ObservableObject {
     if (PinLayouts.Length > 0 && e.Is(nameof(SlidePanel.IsPinned)))
       PinLayouts[ActiveLayout][(int)panel.Dock] = panel.IsPinned;
 
-    if (Layouts.Length > 0 && (e.Is(nameof(SlidePanel.IsPinned)) || e.Is(nameof(SlidePanel.IsOverlay))))
-      Layouts[ActiveLayout][(int)panel.Dock] = panel.GetLayoutMode();
+    if (Layouts.Length > 0 && e.Is(nameof(SlidePanel.Mode)))
+      Layouts[ActiveLayout][(int)panel.Dock] = panel.Mode;
   }
 
   private void _setActiveLayout(int value) {
@@ -71,22 +71,11 @@ public class SlidePanelsGrid : ObservableObject {
     }
   }
 
-  private static void _setLayout(SlidePanel panel, SlidePanel.LayoutMode layout) {
-    switch (layout) {
-      case SlidePanel.LayoutMode.None:
-        panel.IsOverlay = false;
-        panel.IsPinned = false;
-        panel.IsOpen = false;
-        break;
+  private static void _setLayout(SlidePanel panel, SlidePanel.LayoutMode mode) {
+    panel.Mode = mode;
 
-      case SlidePanel.LayoutMode.Overlay:
-        panel.IsOverlay = true;
-        break;
-
-      case SlidePanel.LayoutMode.Docked:
-        panel.IsPinned = true;
-        break;
-    }
+    if (mode == SlidePanel.LayoutMode.None)
+      panel.IsOpen = false;
   }
 
   public void OnMouseMove(double x, double y, double width, double height) {
