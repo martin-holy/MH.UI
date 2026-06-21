@@ -1,3 +1,6 @@
+5.2.0 (not released):
+	- [N] TreeCategory with ITreeRepository
+
 5.1.1:
 	- [B] SlidePanelsGrid: Pinned/Overlay layouts
 
