@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 
 namespace MH.UI.BaseClasses;
 
+[Obsolete("Use MH.UI.TreeLogic.TreeCategory")]
 public class TreeCategory : TreeItem, ITreeCategory {
   public int Id { get; }
   public bool CanCopyItem { get; set; }
@@ -108,6 +109,7 @@ public class TreeCategory : TreeItem, ITreeCategory {
     Tree.GetParentOf<ITreeCategory>(item);
 }
 
+[Obsolete("Use MH.UI.TreeLogic.TreeCategory")]
 public class TreeCategory<TI>(TreeView treeView, string icon, string name, int id, ITreeDataAdapter<TI> dataAdapter)
   : TreeCategory(treeView, icon, name, id) where TI : class, ITreeItem {
 
@@ -208,6 +210,7 @@ public class TreeCategory<TI>(TreeView treeView, string icon, string name, int i
       true)) == 1;
 }
 
+[Obsolete("Use MH.UI.TreeLogic.TreeCategory")]
 public class TreeCategory<TI, TG>(TreeView treeView, string icon, string name, int id, ITreeDataAdapter<TI> da, ITreeDataAdapter<TG> gda)
   : TreeCategory<TI>(treeView, icon, name, id, da) where TI : class, ITreeItem where TG : class, ITreeItem {
 
