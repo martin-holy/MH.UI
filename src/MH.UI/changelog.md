@@ -1,5 +1,6 @@
 5.2.0 (not released):
 	- [N] TreeCategory with ITreeRepository
+	- [U] TreeCategory with ITreeDataAdapter obsolete
 
 5.1.1:
 	- [B] SlidePanelsGrid: Pinned/Overlay layouts
