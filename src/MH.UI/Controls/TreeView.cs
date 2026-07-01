@@ -1,5 +1,6 @@
 ﻿using MH.Utils;
 using MH.Utils.BaseClasses;
+using MH.Utils.Extensions;
 using MH.Utils.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -10,27 +11,24 @@ using System.Threading.Tasks;
 namespace MH.UI.Controls;
 
 public interface ITreeViewHost {
-  public double Width { get; }
-  public void ExpandRootWhenReady(ITreeItem root);
   public void ScrollToTop();
-  public void ScrollToItems(object[] items, bool exactly);
-
-  public event EventHandler<bool>? HostIsVisibleChangedEvent;
+  public void ScrollTo(ITreeItem item, bool exactly);
 }
 
 public class TreeView : ObservableObject {
-  private ITreeViewHost? _host;
   private ITreeItem? _topTreeItem;
 
-  public ITreeViewHost? Host { get => _host; set => _setHost(ref _host, value); }
+  public ITreeViewHost? Host { get; set; }
   public ExtObservableCollection<ITreeItem> RootHolder { get; } = [];
+  public FlatTree FlatTree { get; }
   public Selecting<ITreeItem> SelectedTreeItems { get; } = new();
   public ITreeItem? TopTreeItem { get => _topTreeItem; set { _topTreeItem = value; _onTopTreeItemChanged(); } }
   public bool IsVisible { get; private set; }
-  public ITreeItem[] TopTreeItemPath => _topTreeItem == null ? [] : _topTreeItem.GetThisAndParents().Skip(1).Reverse().Skip(1).ToArray();
+  public ITreeItem[] TopTreeItemPath => _topTreeItem == null ? [] : [.. _topTreeItem.GetThisAndParents().Skip(1).Reverse().Skip(1)];
   // TODO rename and combine with single and multi select
   public bool ShowTreeItemSelection { get; set; }
   public bool MultiSelect { get; set; }
+  public double Width { get; private set; }
 
   public RelayCommand<ITreeItem> ScrollToItemCommand { get; }
   public RelayCommand ScrollToTopCommand { get; }
@@ -40,6 +38,7 @@ public class TreeView : ObservableObject {
   public event EventHandler<ITreeItem>? ItemSelectedEvent;
 
   public TreeView() {
+    FlatTree = new(RootHolder);
     ScrollToItemCommand = new(x => ScrollTo(x));
     ScrollToTopCommand = new(() => Host?.ScrollToTop());
     ScrollSiblingUpCommand = new(() => TopTreeItem?.GetPreviousSibling());
@@ -55,6 +54,23 @@ public class TreeView : ObservableObject {
     if (IsVisible) ScrollTo(TopTreeItem);
   }
 
+  protected virtual void _onWidthChanged() { }
+
+  public void SetVisible(bool value) {
+    if (IsVisible == value) return;
+    IsVisible = value;
+    _onIsVisibleChanged();
+  }
+
+  public void SetWidth(double width) {
+    if (Math.Abs(Width - width) < 1) return;
+    Width = width;
+    _onWidthChanged();
+  }
+
+  public virtual void ScrollToTopItem() =>
+    ScrollTo(TopTreeItem);
+
   public virtual async Task SelectItem(ITreeItem item, CancellationToken token) {
     _raiseItemSelected(item);
     await _onItemSelected(item, token);
@@ -68,54 +84,18 @@ public class TreeView : ObservableObject {
 
   public virtual void ScrollTo(ITreeItem? item, bool exactly = true) {
     if (item == null) return;
-
-    var branch = item.GetBranch();
-    for (var i = 0; i < branch.Count - 1; i++)
-      branch[i].IsExpanded = true;
-
+    item.ExpandToRoot();
     TopTreeItem = item;
-    Host?.ScrollToItems(branch.Cast<object>().ToArray(), exactly);
+    Host?.ScrollTo(item, exactly);
   }
 
   public virtual bool IsHitTestItem(ITreeItem item) => true;
 
   protected void _updateRoot(ITreeItem root, Action<IList<ITreeItem>> itemsAction) {
-    var expand = false;
     RootHolder.Execute(items => {
       items.Clear();
       itemsAction(items);
-      expand = root.IsExpanded;
-      if (expand) root.IsExpanded = false;
       items.Add(root);
     });
-
-    if (!expand) return;
-
-    if (Host == null)
-      root.IsExpanded = true;
-    else
-      Host.ExpandRootWhenReady(root);
-  }
-
-  protected void _setHost<T>(ref T? field, T? value) {
-    if (ReferenceEquals(field, value)) return;
-    var oldValue = field;    
-    field = value;
-    _onHostChanged(oldValue, value);
-    OnPropertyChanged(nameof(Host));
-  }
-
-  protected virtual void _onHostChanged(object? oldValue, object? newValue) {
-    if (oldValue is ITreeViewHost oldHost)
-      oldHost.HostIsVisibleChangedEvent -= _onHostIsVisibleChanged;
-
-    if (newValue is ITreeViewHost newHost)
-      newHost.HostIsVisibleChangedEvent += _onHostIsVisibleChanged;
-  }
-
-  private void _onHostIsVisibleChanged(object? sender, bool value) {
-    if (IsVisible == value) return;
-    IsVisible = value;
-    _onIsVisibleChanged();
   }
 }

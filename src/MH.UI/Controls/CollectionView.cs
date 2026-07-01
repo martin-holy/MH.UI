@@ -17,16 +17,16 @@ namespace MH.UI.Controls;
 public interface ICollectionViewHost : ITreeViewHost;
 
 public abstract class CollectionView : TreeView {
-  private ICollectionViewHost? _host;
-
   public enum SortOrder { Ascending, Descending }
   public enum ViewMode { Content, Details, List, ThumbBig, ThumbMedium, ThumbSmall, Tiles }
+
+  protected bool _layoutDirty;
 
   public record SortField<T>(string Name, Func<T, IComparable> Selector, IComparer? Comparer = null);
 
   protected ViewMode[] ViewModes { get; }
 
-  public new ICollectionViewHost? Host { get => _host; set => _setHost(ref _host, value); }
+  public new ICollectionViewHost? Host { get; set; }
   public bool AddInOrder { get; set; } = true;
   public bool CanOpen { get; set; } = true;
   public bool CanSelect { get; set; } = true;
@@ -67,6 +67,20 @@ public abstract class CollectionView : TreeView {
   };
 
   internal abstract void _clearLastSelected();
+
+  protected override void _onWidthChanged() {
+    if (IsVisible) {
+      _applyLayout();
+      ScrollToTopItem();
+    }
+    else
+      _layoutDirty = true;
+  }
+
+  protected void _applyLayout() {
+    if (RootHolder is [ICollectionViewGroup group])
+      group.Width = Width;
+  }
 }
 
 public abstract class CollectionView<T> : CollectionView where T : class, ISelectable {
@@ -77,7 +91,6 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
   private List<T>? _unfilteredSource;
   private ICollectionViewFilter<T>? _filter;
   private bool _filterIsChanging;
-  private RelayCommand[] _menuSortByFieldCommands = [];
 
   public CollectionViewGroup<T> Root { get; set; }
   public T? TopItem { get; set; }
@@ -132,6 +145,9 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
   public virtual string GetItemTemplateName(ViewMode viewMode) => string.Empty;
   public abstract IEnumerable<SortField<T>> GetSortFields();
 
+  public override void ScrollToTopItem() =>
+    ScrollTo(TopGroup, TopItem);
+
   public override bool IsHitTestItem(ITreeItem item) =>
     item is CollectionViewRow<T> or CollectionViewGroup<T>;
 
@@ -156,8 +172,8 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
     if (sortSource) Sort(source);
 
     if (_filter != null) {
-      _unfilteredSource = source.ToList();
-      source = source.Where(_filter.Filter).ToList();
+      _unfilteredSource = [.. source];
+      source = [.. source.Where(_filter.Filter)];
     }
 
     var root = new CollectionViewGroup<T>(this, source, new(new ListItem(Icon, Name, this), null)) {
@@ -167,7 +183,7 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
       IsThenBy = groupMode is GroupMode.ThenBy or GroupMode.ThenByRecursive,
       IsRecursive = groupMode is GroupMode.GroupByRecursive or GroupMode.ThenByRecursive,
       GroupByItems = groupByItems?.Length == 0 ? null : groupByItems,
-      Width = Host?.Width ?? 0,
+      Width = Width,
       CurrentSortField = sortSource ? DefaultSortField : null,
       CurrentSortOrder = DefaultSortOrder
     };
@@ -215,11 +231,14 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
   public void Remove(T[] items) =>
     _reGroupItems(items, true, true);
 
-  public void ReGroupPendingItems() {
-    _reGroupItems(_pendingRemove.ToArray(), true, false);
-    _reGroupItems(_pendingUpdate.Except(_pendingRemove).ToArray(), false, false);
+  protected bool _reGroupPendingItems() {
+    if (_pendingRemove.Count == 0 && _pendingUpdate.Count == 0) return false;
+    _reGroupItems([.. _pendingRemove], true, false);
+    _reGroupItems([.. _pendingUpdate.Except(_pendingRemove)], false, false);
     _pendingRemove.Clear();
     _pendingUpdate.Clear();
+    _layoutDirty = true;
+    return true;
   }
 
   private void _reGroupItems(T[]? items, bool remove, bool ifContains) {
@@ -230,7 +249,7 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
       return;
     }
 
-    if (ifContains) items = Root.Source.Intersect(items).ToArray();
+    if (ifContains) items = [.. Root.Source.Intersect(items)];
     if (items.Length == 0) return;
 
     if (!IsVisible && !remove) {
@@ -252,11 +271,11 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
     }
     else {
       foreach (var gbiRoot in _groupByItemsRoots)
-        gbiRoot.UpdateGroupByItems(GetGroupByItems(items).ToArray());
+        gbiRoot.UpdateGroupByItems([.. GetGroupByItems(items)]);
 
       var toInsert = _filter == null
         ? items
-        : items.Where(_filter.Filter).ToArray();
+        : [.. items.Where(_filter.Filter)];
 
       foreach (var item in toInsert)
         Root.InsertItem(item, toReWrap);
@@ -306,8 +325,14 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
 
   protected override void _onIsVisibleChanged() {
     if (!IsVisible) return;
-    ReGroupPendingItems();
-    ScrollTo(TopGroup, TopItem);
+
+    var changed = _reGroupPendingItems();
+
+    if (_layoutDirty || changed) {
+      _applyLayout();
+      _layoutDirty = false;
+      ScrollToTopItem();
+    }
   }
 
   public override void SetExpanded(object group) {
@@ -323,10 +348,6 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
     if (group != null && await _groupByDialog.Open(group, GetGroupByItems(group.Source)) is { } selectedItems) {
       group.ReGroup(selectedItems);
       _groupByItemsRoots.Add(group);
-
-      // groups created by ReGroup re-wraps thers items when are rendered in WPF
-      // but for android I re-wrap all here because the widths of groups are known
-      if (System.OperatingSystem.IsAndroid()) ReWrapAll();
     }
   }
 
@@ -348,15 +369,13 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
 
   protected override void _onTopTreeItemChanged() {
     base._onTopTreeItemChanged();
-    var row = TopTreeItem as CollectionViewRow<T>;
-    var group = TopTreeItem as CollectionViewGroup<T>;
 
     TopItem = default;
     TopGroup = null;
 
-    if (group != null)
+    if (TopTreeItem is CollectionViewGroup<T> group)
       TopGroup = group;
-    else if (row != null) {
+    else if (TopTreeItem is CollectionViewRow<T> row) {
       TopGroup = (CollectionViewGroup<T>)row.Parent!;
       if (row.Leaves.Count > 0)
         TopItem = row.Leaves[0];
@@ -417,12 +436,12 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
 
     if (_filter == null) {
       if (_unfilteredSource == null) return;
-      Insert(_unfilteredSource.Except(Root.Source).ToArray());
+      Insert([.. _unfilteredSource.Except(Root.Source)]);
       _unfilteredSource = null;
       return;
     }
 
-    _unfilteredSource = Root.Source.ToList();
+    _unfilteredSource = [.. Root.Source];
     _filter.FilterChangedEvent += _onFilterChanged;
   }
 
