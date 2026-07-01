@@ -1,6 +1,7 @@
-5.2.0 (not released):
+6.0.0 (not released):
 	- [N] TreeCategory with ITreeRepository
 	- [U] TreeCategory with ITreeDataAdapter obsolete
+	- [U] TreeView and CollectionView FlatTree rewrite
 
 5.1.1:
 	- [B] SlidePanelsGrid: Pinned/Overlay layouts
