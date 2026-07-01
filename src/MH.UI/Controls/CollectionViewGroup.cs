@@ -4,7 +4,6 @@ using MH.Utils.BaseClasses;
 using MH.Utils.Extensions;
 using MH.Utils.Interfaces;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -33,7 +32,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
   public bool IsRecursive { get; set; }
   public bool IsGroupBy { get; set; }
   public bool IsThenBy { get; set; }
-  public bool IsReWrapPending { get; set; } = true;
+  public bool IsReWrapPending { get; set; }
   public new string Icon => (GroupedBy?.Data as IListItem)?.Icon ?? Res.IconDashSquareDotted;
   public new string Name => (GroupedBy?.Data as IListItem)?.Name ?? string.Empty;
   public Func<IEnumerable<ITreeItem>> BuildMenu => () => View.GetMenu(this);
@@ -44,6 +43,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
     View = view;
     Source = source;
     GroupedBy = groupedBy;
+    _setPendingReWrap();
     OnPropertyChanged(nameof(SourceCount));
   }
 
@@ -87,9 +87,9 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
   }
 
   public void GroupIt() {
-    Items.Clear();
     var groupByItems = _getGroupByItemsForGrouping();
     if (groupByItems == null) return;
+    Items.Clear();
 
     // first item reserved for empty group
     var newGroups = new CollectionViewGroup<T>?[groupByItems.Length + 1];
@@ -276,11 +276,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
     if (Items.FirstOrDefault() is CollectionViewGroup<T> || !(_width > 0)) return;
 
     if (!IsExpanded) {
-      IsReWrapPending = true;
-      // placeholder for expander
-      if (Items.Count == 0)
-        Items.Add(new CollectionViewRow<T> { Parent = this });
-
+      _setPendingReWrap();
       return;
     }
 
@@ -318,6 +314,13 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
     }
 
     _isViewModePending = false;
+  }
+
+  private void _setPendingReWrap() {
+    IsReWrapPending = true;
+    // placeholder for expander
+    if (Items.Count == 0)
+      Items.Add(new CollectionViewRow<T> { Parent = this });
   }
 
   public int GetItemSize(object item, bool getWidth) =>
