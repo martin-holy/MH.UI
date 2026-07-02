@@ -80,8 +80,8 @@ public class TreeCategory : TreeItem, ITreeCategory {
         (src is ITreeGroup && dest is not ITreeGroup)) return false;
 
     // if src or dest categories are null, or they are not equal
-    if (Utils.Tree.GetParentOf<ITreeCategory>(src) is not { } srcCat ||
-        Utils.Tree.GetParentOf<ITreeCategory>(dest) is not { } destCat ||
+    if (src.GetParentOf<ITreeCategory>() is not { } srcCat ||
+        dest.GetParentOf<ITreeCategory>() is not { } destCat ||
         !ReferenceEquals(srcCat, destCat)) return false;
 
     return true;
@@ -107,7 +107,7 @@ public class TreeCategory : TreeItem, ITreeCategory {
   }
 
   private static ITreeCategory? _getCategory(ITreeItem? item) =>
-    Utils.Tree.GetParentOf<ITreeCategory>(item);
+    item.GetParentOf<ITreeCategory>();
 }
 
 public class TreeCategory<TI>(TreeView treeView, string icon, string name, int id, ITreeRepository<TI> treeRepository)
