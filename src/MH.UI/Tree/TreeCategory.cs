@@ -1,18 +1,39 @@
 ﻿using MH.UI.Controls;
 using MH.UI.Dialogs;
-using MH.UI.Interfaces;
 using MH.Utils;
 using MH.Utils.BaseClasses;
 using MH.Utils.DB.Repositories;
-using MH.Utils.EventsArgs;
 using MH.Utils.Extensions;
 using MH.Utils.Interfaces;
+using MH.Utils.Tree;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace MH.UI.TreeLogic;
+namespace MH.UI.Tree;
+
+public interface ITreeCategory : ITreeItem {
+  public int Id { get; }
+  public bool CanCopyItem { get; set; }
+  public bool CanMoveItem { get; set; }
+
+  public Task ItemCreate(ITreeItem parent);
+  public Task ItemRename(ITreeItem item);
+  public Task ItemDelete(ITreeItem item);
+  public Task ItemMoveToGroup(ITreeItem item);
+
+  public Task GroupCreate(ITreeItem parent);
+  public Task GroupRename(ITreeGroup group);
+  public Task GroupDelete(ITreeGroup group);
+  public void GroupMove(ITreeGroup group, ITreeGroup dest, bool aboveDest);
+  public Task GroupMoveInItems(ITreeGroup group);
+  public IEnumerable<ITreeItem> GroupGetItemsToMove(ITreeGroup group);
+  public bool GroupAnyItemsToMove(ITreeGroup group);
+
+  public bool CanDrop(object? src, ITreeItem? dest);
+  public Task OnDrop(object src, ITreeItem dest, bool aboveDest, bool copy);
+}
 
 // TODO rename namespace to MH.UI.Tree when MH.Utils.Tree class is renamed to TreeU
 public class TreeCategory : TreeItem, ITreeCategory {
@@ -77,7 +98,7 @@ public class TreeCategory : TreeItem, ITreeCategory {
   private static bool _canDrop(ITreeItem? src, ITreeItem? dest) {
     if (src == null || dest == null || ReferenceEquals(src, dest) ||
         ReferenceEquals(src.Parent, dest) || ReferenceEquals(dest.Parent, src) ||
-        (src is ITreeGroup && dest is not ITreeGroup)) return false;
+        src is ITreeGroup && dest is not ITreeGroup) return false;
 
     // if src or dest categories are null, or they are not equal
     if (src.GetParentOf<ITreeCategory>() is not { } srcCat ||
@@ -177,12 +198,10 @@ public class TreeCategory<TI>(TreeView treeView, string icon, string name, int i
     }
 
     // items
-    if (src is ITreeItem srcItem) {
-      if (copy)
+    if (src is ITreeItem srcItem)       if (copy)
         _treeRepository.ItemCopy(srcItem, dest);
       else
         _treeRepository.ItemMove(srcItem, dest, aboveDest);
-    }
 
     AfterDropEvent?.Invoke(this, new(src, dest, aboveDest, copy));
     return Task.CompletedTask;

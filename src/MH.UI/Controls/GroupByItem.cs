@@ -1,7 +1,6 @@
-﻿using MH.Utils;
-using MH.Utils.BaseClasses;
-using MH.Utils.Extensions;
+﻿using MH.Utils.Extensions;
 using MH.Utils.Interfaces;
+using MH.Utils.Tree;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,7 +22,7 @@ public class GroupByItem<T>(IListItem data, Func<T, object, bool>? fit) : TreeIt
 
   // TODO remove items as well
   public void Update(GroupByItem<T>[] items) {
-    var newItems = Tree.FindItem(items, x => ReferenceEquals(x.Data, Data))?.Items.ToArray();
+    var newItems = TreeU.FindItem(items, x => ReferenceEquals(x.Data, Data))?.Items.ToArray();
     if (newItems == null) return;
     var itemItems = Items.Cast<GroupByItem<T>>().ToArray();
 
