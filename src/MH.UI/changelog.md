@@ -2,6 +2,7 @@
 	- [N] TreeCategory with ITreeRepository
 	- [U] TreeCategory with ITreeDataAdapter obsolete
 	- [U] TreeView and CollectionView FlatTree rewrite
+	- [U] MH.Utils 5.0.0
 
 5.1.1:
 	- [B] SlidePanelsGrid: Pinned/Overlay layouts
