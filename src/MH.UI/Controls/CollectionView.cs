@@ -35,7 +35,7 @@ public abstract class CollectionView : TreeView {
   public int GroupContentOffset { get; set; } = 0;
   public string Icon { get; set; }
   public string Name { get; set; }
-  public static int ItemBorderSize { get; set; } = 0;
+  public static int ItemBorderSize { get; set; } = 2;
 
   protected CollectionView(string icon, string name, ViewMode[] viewModes) {
     Icon = icon;

@@ -332,7 +332,7 @@ public class CollectionViewGroup<T> : TreeItem, ICollectionViewGroup where T : c
 
     for (var i = 0; i < Source.Count; i++) {
       var item = Source[i];
-      var itemWidth = GetItemSize(item, true) + (CollectionView.ItemBorderSize * 2); // TODO test ItemBorderSize on Windows as well
+      var itemWidth = GetItemSize(item, true) + (CollectionView.ItemBorderSize * 2);
 
       if (_width - usedSpace < itemWidth) {
         yield return Source.GetRange(index, i - index);
