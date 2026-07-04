@@ -35,7 +35,6 @@ public interface ITreeCategory : ITreeItem {
   public Task OnDrop(object src, ITreeItem dest, bool aboveDest, bool copy);
 }
 
-// TODO rename namespace to MH.UI.Tree when MH.Utils.Tree class is renamed to TreeU
 public class TreeCategory : TreeItem, ITreeCategory {
   public int Id { get; }
   public bool CanCopyItem { get; set; }
