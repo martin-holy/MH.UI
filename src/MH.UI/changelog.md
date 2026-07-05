@@ -1,3 +1,6 @@
+6.0.1:
+	- [U] MH.Utils 5.0.1
+
 6.0.0:
 	- [N] TreeCategory with ITreeRepository
 	- [U] TreeCategory with ITreeDataAdapter obsolete
