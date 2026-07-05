@@ -1,4 +1,4 @@
-6.0.0 (not released):
+6.0.0:
 	- [N] TreeCategory with ITreeRepository
 	- [U] TreeCategory with ITreeDataAdapter obsolete
 	- [U] TreeView and CollectionView FlatTree rewrite
