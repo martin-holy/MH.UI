@@ -6,7 +6,7 @@ namespace MH.UI.Sample.Features.Controls;
 
 public sealed class SampleProgressDialog: ProgressDialog<string> {
   public SampleProgressDialog(string[] items) : base("Sample Progress Dialog", Res.IconImage, items) {
-    _autoRun();
+    _autoStart = true;
   }
 
   protected override Task _do(string item, CancellationToken token) {
