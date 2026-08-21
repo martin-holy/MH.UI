@@ -22,6 +22,8 @@ public class ProgressDialog<T> : Dialog, IProgressDialog {
   private string? _progressText;
   private readonly IProgress<(int, string, object?)> _progress;
 
+  protected bool _autoStart;
+
   public int ProgressMax { get => _progressMax; set { _progressMax = value; OnPropertyChanged(); } }
   public int ProgressValue { get => _progressValue; set { _progressValue = value; OnPropertyChanged(); } }
   public string? ProgressText { get => _progressText; set { _progressText = value; OnPropertyChanged(); } }
@@ -45,9 +47,14 @@ public class ProgressDialog<T> : Dialog, IProgressDialog {
       : [new(ActionCommand, true), new(CloseCommand, false, true)];
   }
 
-  protected void _autoRun() {
-    if (ActionCommand.CanExecute(null))
+  protected override void _onBeforeShow() {
+    if (_autoStart && ActionCommand.CanExecute(null))
       ActionCommand.Execute(null);
+  }
+
+  [Obsolete("Use _autoStart property.")]
+  protected void _autoRun() {
+    _autoStart = true;
   }
 
   protected void _reportProgress(string msg) =>
