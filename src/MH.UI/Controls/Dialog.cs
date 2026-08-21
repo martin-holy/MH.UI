@@ -45,6 +45,7 @@ public class Dialog(string title, string icon) : ObservableObject {
   public static int Show(Dialog dialog) {
     if (_show == null) throw new NotImplementedException(nameof(_show));
     dialog._prepare();
+    dialog._onBeforeShow();
     return _show(dialog);
   }
 
@@ -54,16 +55,19 @@ public class Dialog(string title, string icon) : ObservableObject {
   public static Task<int> ShowAsync(Dialog dialog) {
     if (_showAsync == null) throw new NotImplementedException(nameof(_showAsync));
     dialog._prepare();
+    dialog._onBeforeShow();
     return _showAsync(dialog);
   }
 
   public static void SetShowAsyncImplementation(Func<Dialog, Task<int>> func) =>
     _showAsync = func;
 
-  protected internal void _prepare() {
+  protected void _prepare() {
     TaskCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
     _result = -1;
   }
+
+  protected virtual void _onBeforeShow() { }
 
   private async Task _handleResultAsync(int result) {
     try {
