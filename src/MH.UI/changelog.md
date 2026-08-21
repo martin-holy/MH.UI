@@ -1,3 +1,7 @@
+6.1.0(not released):
+	- [U] Dialog: protected _onBeforeShow method
+	- [U] ProgressDialog: migrate from _autoRun method to _autoStart property
+
 6.0.1:
 	- [U] MH.Utils 5.0.1
 
