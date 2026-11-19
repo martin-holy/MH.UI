@@ -1,3 +1,6 @@
+6.2.0(not released):
+	- [U] CollectionView.SortField: Title property
+
 6.1.0:
 	- [U] Dialog: protected _onBeforeShow method
 	- [U] ProgressDialog: migrate from _autoRun method to _autoStart property
