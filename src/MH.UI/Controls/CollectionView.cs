@@ -23,7 +23,15 @@ public abstract class CollectionView : TreeView {
 
   protected bool _layoutDirty;
 
-  public record SortField<T>(string Name, Func<T, IComparable> Selector, IComparer? Comparer = null);
+  public class SortField<T>(string name, string title, Func<T, IComparable> selector, IComparer? comparer = null) {
+    public string Name { get; } = name;
+    public string Title { get; } = title;
+    public Func<T, IComparable> Selector { get; } = selector;
+    public IComparer? Comparer { get; } = comparer;
+
+    public SortField(string name, Func<T, IComparable> selector, IComparer? comparer = null)
+      : this(name, name, selector, comparer) { }
+  }
 
   protected ViewMode[] ViewModes { get; }
 
