@@ -1,14 +1,29 @@
-﻿using MH.Utils;
+﻿using MH.UI.Localization;
+using MH.Utils;
 using MH.Utils.BaseClasses;
+using MH.Utils.Localization;
 using System;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace MH.UI.BaseClasses;
 
 public abstract class UserSettings {
+  internal static class _loc {
+    public const string Save = "Save.cmd";
+
+    static _loc() {
+      LocalizationManager.Register(typeof(_loc).Assembly, [
+        (Save, "Save")
+      ]);
+    }
+
+    public static void Register() { }
+  }
+
+  static UserSettings() { _loc.Register(); }
+
   private readonly string _filePath;
 
   [JsonIgnore]
@@ -20,7 +35,7 @@ public abstract class UserSettings {
 
   protected UserSettings(string filePath) {
     _filePath = filePath;
-    SaveCommand = new(Save, () => Modified, Res.IconSave, "Save");
+    SaveCommand = new(Save, () => Modified, Res.IconSave, _loc.Save);
   }
 
   protected void _watchForChanges() {
@@ -43,5 +58,9 @@ public abstract class UserSettings {
   public void SetModified(bool value) {
     Modified = value;
     SaveCommand.RaiseCanExecuteChanged();
+  }
+
+  protected virtual void _localize() {
+    SaveCommand.Text = L.Get(_loc.Save);
   }
 }
