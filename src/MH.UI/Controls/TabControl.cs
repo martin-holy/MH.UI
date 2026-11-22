@@ -1,5 +1,7 @@
-﻿using MH.Utils.BaseClasses;
+﻿using MH.UI.Localization;
+using MH.Utils.BaseClasses;
 using MH.Utils.Interfaces;
+using MH.Utils.Localization;
 using MH.Utils.Tree;
 using System;
 using System.Collections.Generic;
@@ -9,6 +11,20 @@ using System.Linq;
 namespace MH.UI.Controls;
 
 public class TabControl : ObservableObject {
+  internal static class _loc {
+    public const string CloseTab = "TabControl.CloseTab.cmd";
+
+    static _loc() {
+      LocalizationManager.Register(typeof(_loc).Assembly, [
+        (CloseTab, "Close")
+      ]);
+    }
+
+    public static void Register() { }
+  }
+
+  static TabControl() { _loc.Register(); }
+
   private IListItem? _selected;
   private bool _canCloseTabs;
   private string _noTabsText = string.Empty;
@@ -28,7 +44,7 @@ public class TabControl : ObservableObject {
   public TabControl(TabStrip tabStrip) {
     TabStrip = tabStrip;
     SelectTabCommand = new(_setSelected);
-    CloseTabCommand = new(Close, Res.IconXCross, "Close");
+    CloseTabCommand = new(Close, Res.IconXCross, L.Get(_loc.CloseTab));
 
     Tabs.CollectionChanged += (_, _) => TabStrip.UpdateMaxTabSize(Tabs.Count);
   }
