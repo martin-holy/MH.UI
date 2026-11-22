@@ -11,7 +11,7 @@ namespace MH.UI.BaseClasses;
 
 public abstract class UserSettings {
   internal static class _loc {
-    public const string Save = "Save.cmd";
+    public const string Save = "UserSettings.Save.cmd";
 
     static _loc() {
       LocalizationManager.Register(typeof(_loc).Assembly, [
