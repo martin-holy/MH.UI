@@ -1,10 +1,12 @@
 ﻿using MH.UI.Dialogs;
 using MH.UI.Interfaces;
+using MH.UI.Localization;
 using MH.Utils;
 using MH.Utils.BaseClasses;
 using MH.Utils.EventsArgs;
 using MH.Utils.Extensions;
 using MH.Utils.Interfaces;
+using MH.Utils.Localization;
 using MH.Utils.Tree;
 using System;
 using System.Collections;
@@ -18,6 +20,68 @@ namespace MH.UI.Controls;
 public interface ICollectionViewHost : ITreeViewHost;
 
 public abstract class CollectionView : TreeView {
+  internal static class _loc {
+    private const string _prefix = "CollectionView.";
+    public const string Shuffle = _prefix + "Shuffle.cmd";
+    public const string SortOrderAscending = _prefix + "SortOrder.Ascending";
+    public const string SortOrderDescending = _prefix + "SortOrder.Descending";
+    public const string TxtSortBy = _prefix + "txt.SortBy";
+    public const string SortAscending = _prefix + "SortAscending.cmd";
+    public const string SortDescending = _prefix + "SortDescending.cmd";
+    public const string Sort = _prefix + "Sort.cmd";
+    public const string TxtViewMode = _prefix + "txt.ViewMode";
+    public const string ViewModeContent = _prefix + "ViewMode.Content";
+    public const string ViewModeDetails = _prefix + "ViewMode.Details";
+    public const string ViewModeList = _prefix + "ViewMode.List";
+    public const string ViewModeThumbBig = _prefix + "ViewMode.ThumbBig";
+    public const string ViewModeThumbMedium = _prefix + "ViewMode.ThumbMedium";
+    public const string ViewModeThumbSmall = _prefix + "ViewMode.ThumbSmall";
+    public const string ViewModeTiles = _prefix + "ViewMode.Tiles";
+    public const string OpenGroupByDialog = _prefix + "OpenGroupByDialog.cmd";
+
+    static _loc() {
+      LocalizationManager.Register(typeof(_loc).Assembly, [
+        (Shuffle, "Shuffle"),
+        (SortOrderAscending, "Ascending"),
+        (SortOrderDescending, "Descending"),
+        (TxtSortBy, "Sort by"),
+        (SortAscending, "Ascending"),
+        (SortDescending, "Descending"),
+        (Sort, "Sort"),
+        (TxtViewMode, "View"),
+        (ViewModeContent, "Content"),
+        (ViewModeDetails, "Details"),
+        (ViewModeList, "List"),
+        (ViewModeThumbBig, "Thumb big"),
+        (ViewModeThumbMedium, "Thumb medium"),
+        (ViewModeThumbSmall, "Thumb small"),
+        (ViewModeTiles, "Tiles"),
+        (OpenGroupByDialog, "Group by")
+      ]);
+    }
+
+    public static void Register() { }
+  }
+
+  static CollectionView() {
+    _loc.Register();
+
+    SortOrderTextMap = [
+      new(SortOrder.Ascending, L.Get(_loc.SortOrderAscending)),
+      new(SortOrder.Descending, L.Get(_loc.SortOrderDescending))
+    ];
+
+    _viewModeTextMap = new() {
+      { ViewMode.Content, L.Get(_loc.ViewModeContent) },
+      { ViewMode.Details, L.Get(_loc.ViewModeDetails) },
+      { ViewMode.List, L.Get(_loc.ViewModeList) },
+      { ViewMode.ThumbBig, L.Get(_loc.ViewModeThumbBig) },
+      { ViewMode.ThumbMedium, L.Get(_loc.ViewModeThumbMedium) },
+      { ViewMode.ThumbSmall, L.Get(_loc.ViewModeThumbSmall) },
+      { ViewMode.Tiles, L.Get(_loc.ViewModeTiles) }
+    };
+  }
+
   public enum SortOrder { Ascending, Descending }
   public enum ViewMode { Content, Details, List, ThumbBig, ThumbMedium, ThumbSmall, Tiles }
 
@@ -44,6 +108,8 @@ public abstract class CollectionView : TreeView {
   public string Icon { get; set; }
   public string Name { get; set; }
   public static int ItemBorderSize { get; set; } = 2;
+  public static KeyValuePair<SortOrder, string>[] SortOrderTextMap { get; }
+  protected static readonly Dictionary<ViewMode, string> _viewModeTextMap;
 
   protected CollectionView(string icon, string name, ViewMode[] viewModes) {
     Icon = icon;
@@ -59,21 +125,6 @@ public abstract class CollectionView : TreeView {
   public virtual void SelectItem(object row, object item, bool isCtrlOn, bool isShiftOn) { }
   public virtual void SetExpanded(object group) { }
   public virtual IEnumerable<ITreeItem> GetMenu(object item) => [];
-
-  public static KeyValuePair<SortOrder, string>[] SortOrderTextMap { get; } = [
-    new(SortOrder.Ascending, "Ascending"),
-    new(SortOrder.Descending, "Descending")
-  ];
-
-  protected static readonly Dictionary<ViewMode, string> _viewModeTextMap = new() {
-    { ViewMode.Content, "Content" },
-    { ViewMode.Details, "Details" },
-    { ViewMode.List, "List" },
-    { ViewMode.ThumbBig, "Thumb big" },
-    { ViewMode.ThumbMedium, "Thumb medium" },
-    { ViewMode.ThumbSmall, "Thumb small" },
-    { ViewMode.Tiles, "Tiles" }
-  };
 
   internal abstract void _clearLastSelected();
 
@@ -135,11 +186,11 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
 
   protected CollectionView(string icon, string name, ViewMode[] viewModes) : base(icon, name, viewModes) {
     Root = new(this, [], null);
-    OpenGroupByDialogCommand = new(_openGroupByDialog, Res.IconGroup, "Group by");
-    ShuffleCommand = new(_shuffle, Res.IconRandom, "Shuffle");
-    SortCommand = new(_sort, Res.IconSort, "Sort");
-    SortAscendingCommand = new(g => _sortBy(g!, g!.CurrentSortField, SortOrder.Ascending), g => g != null, null, "Ascending");
-    SortDescendingCommand = new(g => _sortBy(g!, g!.CurrentSortField, SortOrder.Descending), g => g != null, null, "Descending");
+    OpenGroupByDialogCommand = new(_openGroupByDialog, Res.IconGroup, L.Get(_loc.OpenGroupByDialog));
+    ShuffleCommand = new(_shuffle, Res.IconRandom, L.Get(_loc.Shuffle));
+    SortCommand = new(_sort, Res.IconSort, L.Get(_loc.Sort));
+    SortAscendingCommand = new(g => _sortBy(g!, g!.CurrentSortField, SortOrder.Ascending), g => g != null, null, L.Get(_loc.SortAscending));
+    SortDescendingCommand = new(g => _sortBy(g!, g!.CurrentSortField, SortOrder.Descending), g => g != null, null, L.Get(_loc.SortDescending));
   }
 
   protected void _raiseItemOpened(T item) => ItemOpenedEvent?.Invoke(this, item);
@@ -476,7 +527,7 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
       new MenuItem(ShuffleCommand, group)
     };
 
-    var sortMenu = new MenuItem(Res.IconSort, "Sort by");
+    var sortMenu = new MenuItem(Res.IconSort, L.Get(_loc.TxtSortBy));
 
     foreach (var field in GetSortFields()) {
       var cmd = new RelayCommand<CollectionViewGroup<T>>(
@@ -496,7 +547,7 @@ public abstract class CollectionView<T> : CollectionView where T : class, ISelec
     items.Add(sortMenu);
 
     if (ViewModes.Length > 1)
-      items.Add(new MenuItem(null, "View",
+      items.Add(new MenuItem(null, L.Get(_loc.TxtViewMode),
         ViewModes.Select(vm => new MenuItem(
           new RelayCommand<ICollectionViewGroup>(g => g?.SetViewMode(vm), g => g != null, null, _viewModeTextMap[vm]), item))));
 
