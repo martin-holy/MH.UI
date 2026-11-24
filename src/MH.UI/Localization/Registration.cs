@@ -6,6 +6,7 @@ namespace MH.UI.Localization;
 public static class Registration {
   public static void RegisterAll() {
     CollectionView._loc.Register();
+    Dialog._loc.Register();
     TabControl._loc.Register();
     UserSettings._loc.Register();
   }

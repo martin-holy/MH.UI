@@ -1,11 +1,44 @@
-﻿using MH.Utils;
+﻿using MH.UI.Localization;
+using MH.Utils;
 using MH.Utils.BaseClasses;
+using MH.Utils.Localization;
 using System;
 using System.Threading.Tasks;
 
 namespace MH.UI.Controls;
 
 public class Dialog(string title, string icon) : ObservableObject {
+  internal static class _loc {
+    private const string _prefix = "Dialog.";
+    public const string Cancel = _prefix + "Cancel.cmd";
+    public const string Close = _prefix + "Close.cmd";
+    public const string No = _prefix + "No.cmd";
+    public const string Ok = _prefix + "Ok.cmd";
+    public const string Yes = _prefix + "Yes.cmd";
+
+    static _loc() {
+      LocalizationManager.Register(typeof(_loc).Assembly, [
+        (Cancel, "Cancel"),
+        (Close, "Close"),
+        (No, "No"),
+        (Ok, "Ok"),
+        (Yes, "Yes")
+      ]);
+    }
+
+    public static void Register() { }
+  }
+
+  static Dialog() {
+    _loc.Register();
+
+    CancelCommand = new(x => SetResult(x, 0), null, L.Get(_loc.Cancel));
+    CloseCommand = new(x => SetResult(x, 0), null, L.Get(_loc.Close));
+    NoCommand = new(x => SetResult(x, 0), null, L.Get(_loc.No));
+    OkCommand = new(x => SetResult(x, 1), null, L.Get(_loc.Ok));
+    YesCommand = new(x => SetResult(x, 1), null, L.Get(_loc.Yes));
+  }
+
   private string _title = title;
   private string _icon = icon;
   private int _result = -1;
@@ -27,11 +60,11 @@ public class Dialog(string title, string icon) : ObservableObject {
       }
     }
 
-  public static RelayCommand<Dialog> CancelCommand { get; } = new(x => SetResult(x, 0), null, "Cancel");
-  public static RelayCommand<Dialog> CloseCommand { get; } = new(x => SetResult(x, 0), null, "Close");
-  public static RelayCommand<Dialog> NoCommand { get; } = new(x => SetResult(x, 0), null, "No");
-  public static RelayCommand<Dialog> OkCommand { get; } = new(x => SetResult(x, 1), null, "Ok");
-  public static RelayCommand<Dialog> YesCommand { get; } = new(x => SetResult(x, 1), null, "Yes");
+  public static RelayCommand<Dialog> CancelCommand { get; }
+  public static RelayCommand<Dialog> CloseCommand { get; }
+  public static RelayCommand<Dialog> NoCommand { get; }
+  public static RelayCommand<Dialog> OkCommand { get; }
+  public static RelayCommand<Dialog> YesCommand { get; }
 
   public static void SetResult(Dialog? dialog, int result) {
     if (dialog != null) dialog.Result = result;
